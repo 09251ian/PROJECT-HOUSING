@@ -1,11 +1,6 @@
 <?php
-<<<<<<< HEAD
-//hello
 
-=======
-// hello
-//hiii
->>>>>>> 8d488886498077efdc1640815c9e93ef3942c8e5
+
 namespace App\Controllers;
 
 use App\Models\UserModel;
