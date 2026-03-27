@@ -1,5 +1,9 @@
 <?php
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3a7ae04c3a4ccb6487a1eca3a0194805cc51abac
 namespace App\Controllers;
 
 use App\Models\UserModel;
