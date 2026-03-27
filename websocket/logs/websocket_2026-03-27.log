@@ -1,0 +1,6 @@
+[2026-03-27 08:51:23] [warning] ✗ Database connection failed: SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it (WebSocket will still work)
+[2026-03-27 09:55:30] [success] ✓ Database connected successfully
+[2026-03-27 10:06:30] [success] ✓ Database connected successfully
+[2026-03-27 10:27:39] [success] ✓ Database connected successfully
+[2026-03-27 11:30:11] [success] ✓ Database connected successfully
+[2026-03-27 11:36:35] [success] ✓ Database connected successfully
