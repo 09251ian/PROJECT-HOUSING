@@ -1,68 +1,121 @@
-# CodeIgniter 4 Application Starter
+# Housing Marketplace - CodeIgniter 4 Application
 
-## What is CodeIgniter?
+## Overview
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+This is a **full-stack web application** built with **CodeIgniter 4** PHP framework for a **housing/real estate marketplace**. It enables:
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+- **Sellers** to list, edit, archive, and manage properties with image uploads
+- **Buyers** to search/filter properties, make offers, and chat with sellers
+- **User authentication** (login/register) with role-based dashboards
+- **Offer management** (accept/reject offers)
+- **Real-time chat** between buyers and sellers per property
+- **Property search/filter** by title, location, price range
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+**Key Features:**
+- Responsive dashboards for buyers/sellers
+- Image uploads for properties/user profiles (stored in `public/uploads/`)
+- Pagination for property lists
+- Form validation & sanitization
+- Session-based auth with password hashing
+- Property archiving (soft delete)
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+## Tech Stack
+- **Framework**: CodeIgniter 4 (MVC pattern)
+- **Database**: MySQL (`housing` database)
+- **Frontend**: PHP Views + HTML/CSS/JS (Bootstrap-like)
+- **Server**: Apache/XAMPP (`.htaccess` configured)
+- **File Storage**: Local `public/uploads/`
 
-## Installation & updates
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+## Core Functions & Routes
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+### Authentication (`app/Controllers/Auth.php`)
+- `GET /login` → Login form
+- `POST /login` → Authenticate & role-redirect
+- `GET/POST /register` → User registration (role selection, profile pic)
+- `GET /logout` → Session destroy
 
-## Setup
+### Buyer Dashboard (`app/Controllers/BuyerController.php`)
+- `GET /buyer/dashboard` → Filtered properties list, existing offers/chats
+- Filters: search (title/desc), location, price ranges (<1M, 1-10M, etc.)
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+### Seller Dashboard (`app/Controllers/SellerController.php`)
+- `GET /seller/dashboard` → Own properties (paginated), offers
+- `POST /seller/add_property` → Add property w/ image
+- `POST /seller/edit_property/:id` → Edit property
+- `POST /seller/offer_action` → Accept/reject offers
+- `GET /seller/archived` → Archived properties
+- `POST /seller/archive/unarchive/delete` → Manage visibility/permanent delete
 
-## Important Change with index.php
+### Other
+- `POST /make_offer` → Create offer on property
+- `GET/POST /message/:receiver/:property` → Chat
+- `GET /profile/:id` → User profile view
+- `GET /` → Landing page
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+### Models
+- **PropertyModel**: CRUD + `getFilteredProperties()` for buyer search
+- **UserModel**, **OfferModel**, **MessageModel**: Standard CRUD
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+## Setup Instructions
 
-**Please** read the user guide for a better explanation of how CI4 works!
+1. **Prerequisites**:
+   - PHP 7.4+, MySQL, Apache (XAMPP recommended)
+   - Composer
 
-## Repository Management
+2. **Install Dependencies**:
+   ```
+   cd c:/xampp/htdocs/Final_PROJECT-HOUSING/PROJECT-HOUSING
+   composer install
+   ```
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+3. **Database**:
+   - Import `housing (1) (1).sql` into MySQL db named `housing`
+   - Update `app/Config/Database.php` if needed (localhost/root/'' → housing)
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+4. **Permissions**:
+   ```
+   chmod -R 755 writable/
+   chmod -R 755 public/uploads/
+   ```
 
-## Server Requirements
+5. **Run**:
+   - Start XAMPP (Apache/MySQL)
+   - Visit `http://localhost/Final_PROJECT-HOUSING/PROJECT-HOUSING/public/`
+   - Register as buyer/seller, upload properties, test offers/chat
 
-PHP version 7.4 or higher is required, with the following extensions installed:
+## Folder Structure
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+```
+PROJECT-HOUSING/
+├── app/                 # CI4 app (Controllers, Models, Views, Config)
+├── public/              # Web root (.htaccess, index.php, uploads/)
+├── writable/            # Cache/logs/sessions (auto-created)
+├── tests/               # PHPUnit tests
+├── composer.json        # Dependencies
+├── housing*.sql         # DB schema/data
+└── websocket/server.php # Future WebSocket chat?
+```
 
-> [!WARNING]
-> The end of life date for PHP 7.4 was November 28, 2022.
-> The end of life date for PHP 8.0 was November 26, 2023.
-> If you are still using PHP 7.4 or 8.0, you should upgrade immediately.
-> The end of life date for PHP 8.1 will be November 25, 2024.
+## Security Features
+- Password hashing (`password_hash`)
+- Input sanitization (`FILTER_SANITIZE_*`)
+- Form validation rules
+- Session role checks
+- CSRF protection (CI4 default)
+- Image upload validation/moves
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+## Future Improvements
+- WebSocket real-time chat (`websocket/server.php`)
+- Email notifications
+- Advanced search/pagination for buyers
+- Property categories
+- Maps integration for locations
+- Admin panel
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+## Testing
+```
+vendor/bin/phpunit
+```
+
+**Enjoy the Housing Marketplace! 🏠✨**
