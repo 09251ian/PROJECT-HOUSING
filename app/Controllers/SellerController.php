@@ -300,3 +300,4 @@ class SellerController extends BaseController
         return redirect()->to('/seller/archived');
     }
 }
+//minor update
