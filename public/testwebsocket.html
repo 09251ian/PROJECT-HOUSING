@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test - Housing System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #198754;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.connecting { background: #fff3cd; color: #856404; }
+        .status.connected { background: #d4edda; color: #155724; }
+        .status.disconnected { background: #f8d7da; color: #721c24; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        
+        .messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            background: #fafafa;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .sent { color: #0066cc; }
+        .received { color: #009900; }
+        .error { color: #cc0000; font-weight: bold; }
+        .info { color: #666; }
+        
+        button {
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            background: #198754;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #146c43;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 200px;
+        }
+        .port-selector {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+        .success { color: #28a745; }
+        .failure { color: #dc3545; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 WebSocket Connection Test</h1>
+        
+        <div class="port-selector">
+            <strong>Test Configuration:</strong><br>
+            <label>
+                <input type="radio" name="port" value="8080" checked> Port 8080 (Default)
+            </label>
+            <label>
+                <input type="radio" name="port" value="8081"> Port 8081
+            </label>
+            <label>
+                <input type="radio" name="port" value="8082"> Port 8082
+            </label>
+            <label>
+                <input type="radio" name="port" value="3000"> Port 3000
+            </label>
+            <label>
+                <input type="radio" name="port" value="custom"> Custom:
+                <input type="text" id="customPort" placeholder="Port number" style="width: 80px;">
+            </label>
+        </div>
+        
+        <div id="status" class="status disconnected">Status: Not connected</div>
+        
+        <div>
+            <button onclick="testConnection()">🔌 Test Connection</button>
+            <button onclick="stopConnection()">⏹️ Stop Connection</button>
+            <button onclick="clearMessages()">🗑️ Clear Messages</button>
+            <button onclick="testMultiplePorts()">🔄 Test All Ports</button>
+        </div>
+        
+        <div id="messages" class="messages">
+            <div class="message info">Ready to test WebSocket connection...</div>
+        </div>
+        
+        <div>
+            <strong>Quick Test Commands:</strong>
+            <button onclick="sendPing()">📡 Send PING</button>
+            <button onclick="sendAuth()">🔐 Send AUTH</button>
+            <button onclick="sendGetProperties()">🏠 Get Properties</button>
+        </div>
+        
+        <details>
+            <summary>Debug Information</summary>
+            <pre id="debugInfo"></pre>
+        </details>
+    </div>
+    
+    <script>
+        let currentWs = null;
+        let debugLogs = [];
+        
+        function addMessage(text, type = 'info') {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            messageDiv.textContent = `[${timestamp}] ${text}`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // Also add to debug
+            addDebug(text, type);
+        }
+        
+        function addDebug(text, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLogs.unshift(`[${timestamp}] [${type.toUpperCase()}] ${text}`);
+            if (debugLogs.length > 100) debugLogs.pop();
+            
+            const debugInfo = document.getElementById('debugInfo');
+            if (debugInfo) {
+                debugInfo.textContent = debugLogs.join('\n');
+            }
+            console.log(`[${type}] ${text}`);
+        }
+        
+        function updateStatus(status, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = `Status: ${status}`;
+            addMessage(`Status changed to: ${status}`, type);
+        }
+        
+        function getSelectedPort() {
+            const selectedPort = document.querySelector('input[name="port"]:checked');
+            if (selectedPort.value === 'custom') {
+                const customPort = document.getElementById('customPort').value;
+                return customPort || 8080;
+            }
+            return parseInt(selectedPort.value);
+        }
+        
+        function stopConnection() {
+            if (currentWs) {
+                addMessage('Closing connection...', 'info');
+                currentWs.close();
+                currentWs = null;
+                updateStatus('Disconnected (manually closed)', 'disconnected');
+            }
+        }
+        
+        function testConnection() {
+            // Close existing connection
+            if (currentWs) {
+                currentWs.close();
+                currentWs = null;
+            }
+            
+            const port = getSelectedPort();
+            const wsUrl = `ws://localhost:${port}`;
+            
+            addMessage(`Attempting to connect to: ${wsUrl}`, 'info');
+            updateStatus(`Connecting to ${wsUrl}...`, 'connecting');
+            
+            try {
+                currentWs = new WebSocket(wsUrl);
+                let connectionTimeout = setTimeout(() => {
+                    if (currentWs && currentWs.readyState !== WebSocket.OPEN) {
+                        addMessage(`Connection timeout after 5 seconds for port ${port}`, 'error');
+                        updateStatus(`Connection timeout (port ${port})`, 'error');
+                        if (currentWs) currentWs.close();
+                    }
+                }, 5000);
+                
+                currentWs.onopen = function() {
+                    clearTimeout(connectionTimeout);
+                    addMessage(`✅ Successfully connected to ${wsUrl}!`, 'received');
+                    updateStatus(`Connected to ${wsUrl}`, 'connected');
+                    
+                    // Send initial test messages
+                    setTimeout(() => {
+                        sendPing();
+                        setTimeout(() => {
+                            sendAuth();
+                        }, 500);
+                    }, 500);
+                };
+                
+                currentWs.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        addMessage(`📩 Received: ${data.type}`, 'received');
+                        console.log('Full message:', data);
+                        
+                        // Handle different message types
+                        switch(data.type) {
+                            case 'CONNECTION_ESTABLISHED':
+                                addMessage(`  Server: ${data.payload.message}`, 'info');
+                                addMessage(`  Connection ID: ${data.payload.connection_id}`, 'info');
+                                break;
+                            case 'AUTH_SUCCESS':
+                                addMessage(`  ✅ Authentication successful! User: ${data.payload.user_id} (${data.payload.role})`, 'success');
+                                break;
+                            case 'AUTH_FAILED':
+                                addMessage(`  ❌ Authentication failed: ${data.payload.message}`, 'error');
+                                break;
+                            case 'PONG':
+                                addMessage(`  🏓 Pong received at ${data.payload.server_time}`, 'success');
+                                break;
+                            case 'PROPERTIES_LIST':
+                                addMessage(`  📋 Received ${data.payload.length} properties`, 'success');
+                                if (data.payload.length > 0) {
+                                    addMessage(`  First property: ${data.payload[0].title}`, 'info');
+                                }
+                                break;
+                            case 'ERROR':
+                                addMessage(`  ❌ Server error: ${data.payload.message}`, 'error');
+                                break;
+                            default:
+                                addMessage(`  Unhandled type: ${data.type}`, 'info');
+                        }
+                    } catch (e) {
+                        addMessage(`Error parsing message: ${e.message}`, 'error');
+                        addMessage(`Raw message: ${event.data}`, 'info');
+                    }
+                };
+                
+                currentWs.onclose = function(event) {
+                    clearTimeout(connectionTimeout);
+                    let reason = '';
+                    if (event.code === 1000) reason = 'Normal closure';
+                    else if (event.code === 1001) reason = 'Going away';
+                    else if (event.code === 1006) reason = 'Abnormal closure (server not running?)';
+                    else reason = `Code: ${event.code}`;
+                    
+                    addMessage(`❌ Disconnected: ${reason}`, 'error');
+                    updateStatus(`Disconnected - ${reason}`, 'disconnected');
+                    currentWs = null;
+                };
+                
+                currentWs.onerror = function(error) {
+                    clearTimeout(connectionTimeout);
+                    addMessage(`WebSocket error: ${error}`, 'error');
+                    updateStatus('Connection error', 'error');
+                    console.error('WebSocket error details:', error);
+                };
+                
+            } catch (error) {
+                addMessage(`Failed to create WebSocket: ${error.message}`, 'error');
+                updateStatus(`Failed: ${error.message}`, 'error');
+                currentWs = null;
+            }
+        }
+        
+        function sendPing() {
+            if (!currentWs || currentWs.readyState !== WebSocket.OPEN) {
+                addMessage('Cannot send PING: Not connected', 'error');
+                return;
+            }
+            
+            const pingMsg = JSON.stringify({
+                type: 'PING',
+                payload: { timestamp: Date.now() }
+            });
+            currentWs.send(pingMsg);
+            addMessage('📡 Sent PING', 'sent');
+        }
+        
+        function sendAuth() {
+            if (!currentWs || currentWs.readyState !== WebSocket.OPEN) {
+                addMessage('Cannot send AUTH: Not connected', 'error');
+                return;
+            }
+            
+            const userId = prompt('Enter User ID (default: 1)', '1');
+            const role = prompt('Enter Role (buyer/seller, default: buyer)', 'buyer');
+            
+            const authMsg = JSON.stringify({
+                type: 'AUTH',
+                payload: {
+                    user_id: parseInt(userId) || 1,
+                    role: role || 'buyer'
+                }
+            });
+            currentWs.send(authMsg);
+            addMessage(`🔐 Sent AUTH for User ${userId} (${role})`, 'sent');
+        }
+        
+        function sendGetProperties() {
+            if (!currentWs || currentWs.readyState !== WebSocket.OPEN) {
+                addMessage('Cannot send GET_PROPERTIES: Not connected', 'error');
+                return;
+            }
+            
+            currentWs.send(JSON.stringify({
+                type: 'GET_PROPERTIES',
+                payload: {}
+            }));
+            addMessage('🏠 Sent GET_PROPERTIES', 'sent');
+        }
+        
+        function testMultiplePorts() {
+            addMessage('=== Testing all ports ===', 'info');
+            const ports = [8080, 8081, 8082, 3000];
+            
+            ports.forEach(port => {
+                const wsUrl = `ws://localhost:${port}`;
+                addMessage(`Testing ${wsUrl}...`, 'info');
+                
+                const testWs = new WebSocket(wsUrl);
+                let timeout = setTimeout(() => {
+                    addMessage(`  ❌ Port ${port}: Timeout`, 'error');
+                    testWs.close();
+                }, 2000);
+                
+                testWs.onopen = function() {
+                    clearTimeout(timeout);
+                    addMessage(`  ✅ Port ${port}: WORKING!`, 'success');
+                    testWs.close();
+                };
+                
+                testWs.onerror = function() {
+                    clearTimeout(timeout);
+                    addMessage(`  ❌ Port ${port}: Not available`, 'error');
+                };
+            });
+        }
+        
+        function clearMessages() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '<div class="message info">Messages cleared</div>';
+        }
+        
+        // Auto-test on page load
+        window.addEventListener('load', function() {
+            addMessage('WebSocket Test Page Loaded', 'info');
+            addMessage('Available ports to test: 8080, 8081, 8082, 3000', 'info');
+            addMessage('Click "Test Connection" to start', 'info');
+        });
+        
+        // Manual reconnect function for console
+        window.reconnect = testConnection;
+        window.testWs = testConnection;
+        
+        // Display helpful info in console
+        console.log('WebSocket Test Tool Ready!');
+        console.log('Commands: testConnection(), sendPing(), sendAuth(), testMultiplePorts()');
+    </script>
+</body>
+</html>
