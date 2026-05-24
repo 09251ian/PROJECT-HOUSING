@@ -28,6 +28,9 @@ class MakeOfferController extends BaseController
         return $httpCode === 200;
     }
 
+
+class MakeOfferController extends BaseController
+{
     public function create()
     {
         $session = session();
@@ -75,6 +78,7 @@ class MakeOfferController extends BaseController
 
         // Create new offer
         $offerData = [
+        $offerModel->insert([
             'property_id' => $propertyId,
             'buyer_id' => $buyerId,
             'amount' => $amount,
@@ -100,6 +104,7 @@ class MakeOfferController extends BaseController
 
         // Send real-time notification to seller
         $this->sendSocketNotification('new-offer', $notificationData);
+        ]);
 
         $session->setFlashdata('success', 'Your offer has been sent. Please wait for seller response.');
         return redirect()->back();

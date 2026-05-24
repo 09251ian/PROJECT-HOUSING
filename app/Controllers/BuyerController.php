@@ -30,6 +30,24 @@ class BuyerController extends BaseController
 
         // Prepare favorites for each property
         $favoriteModel = new FavoriteModel();
+
+
+        // 2️⃣ Get search & filter inputs and sanitize
+        $search = trim($this->request->getGet('search', FILTER_SANITIZE_STRING));
+        $location = trim($this->request->getGet('location', FILTER_SANITIZE_STRING));
+        $price_range = trim($this->request->getGet('price_range', FILTER_SANITIZE_STRING));
+
+        // 3️⃣ Fetch properties
+        $propertyModel = new PropertyModel();
+        $properties = $propertyModel->getFilteredProperties($search, $location, $price_range);
+
+        // 4️⃣ Prepare favorites for each property
+        $favoriteModel = new FavoriteModel();
+
+        // Keep two things:
+        // - $favorites: quick boolean lookup per property for listing UI
+        // - $favoritesPreview: detailed preview list for the embedded widget
+
         $favorites = [];
         foreach ($properties as $property) {
             $propertyId = (int) ($property['id'] ?? 0);
@@ -44,6 +62,7 @@ class BuyerController extends BaseController
         }
 
         // Prepare offers for each property
+        // 5️⃣ Prepare offers for each property
         $offerModel = new OfferModel();
         $existingOffers = [];
         foreach ($properties as $property) {
@@ -54,6 +73,7 @@ class BuyerController extends BaseController
         }
 
         // Prepare chat info for each property
+        // 6️⃣ Prepare chat info for each property
         $messageModel = new MessageModel();
         $chatsExist = [];
         foreach ($properties as $property) {
@@ -67,6 +87,7 @@ class BuyerController extends BaseController
         }
 
         // Pass all data to view
+        // 7️⃣ Pass all data to view
         return view('buyer/dashboard', [
             'user' => $user,
             'properties' => $properties,
@@ -124,6 +145,7 @@ class BuyerController extends BaseController
 
         return redirect()->back()->with('success', $message);
     }
+
 
     /**
      * Helper to check user role or redirect

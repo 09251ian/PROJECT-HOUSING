@@ -145,8 +145,24 @@ include __DIR__ . '/../partials/header.php';
               $existingOffer = $existingOffers[$propertyId] ?? null;
               $chatExist = $chatsExist[$propertyId] ?? false;
               $isFavorite = $favorites[$propertyId] ?? false;
+<<<<<<< HEAD
               // Fix image path for existing properties
               $imagePath = !empty($property['image_path']) && file_exists(FCPATH . $property['image_path']) 
+=======
+
+            ?>
+
+            <div class="col-md-6 mb-4 realtime-property">
+
+              <div class="card shadow-sm border-0 rounded-4 h-100">
+
+                <img src="<?= !empty($property['image_path']) ? base_url($property['image_path']) : 'https://via.placeholder.com/400x250?text=No+Image' ?>"
+                     class="card-img-top"
+                     style="height:250px; object-fit:cover;"
+
+              // Fix image path for existing properties
+              $imagePath = !empty($property['image_path'] && file_exists(FCPATH . $property['image_path']) 
+>>>>>>> 23d0e189831cabd73027fcd8d3cd4adc6c11159e
                   ? base_url($property['image_path']) 
                   : 'https://via.placeholder.com/400x250?text=No+Image';
             ?>
@@ -159,6 +175,10 @@ include __DIR__ . '/../partials/header.php';
                      class="card-img-top"
                      style="height:250px; object-fit:cover;"
                      onerror="this.src='https://via.placeholder.com/400x250?text=No+Image'"
+<<<<<<< HEAD
+=======
+
+>>>>>>> 23d0e189831cabd73027fcd8d3cd4adc6c11159e
                      alt="Property Image">
 
                 <div class="card-body">
@@ -211,6 +231,7 @@ include __DIR__ . '/../partials/header.php';
                   </form>
 
                   <?php if ($existingOffer): ?>
+<<<<<<< HEAD
                     <div class="offer-status mt-2">
                       <?php if ($existingOffer['status'] === 'pending'): ?>
                         <span class="badge bg-warning text-dark">
@@ -234,18 +255,64 @@ include __DIR__ . '/../partials/header.php';
                       <input type="hidden"
                              name="property_id"
                              value="<?= $propertyId ?>">
+
+
+                    <div class="mt-2">
+
+                      <?php if ($existingOffer['status'] === 'pending'): ?>
+
+                        <span class="badge bg-warning text-dark">
+                          ⏳ Offer Pending
+                        </span>
+
+                      <?php elseif ($existingOffer['status'] === 'accepted'): ?>
+
+                        <span class="badge bg-success">
+                          ✅ Offer Accepted
+                        </span>
+
+                      <?php elseif ($existingOffer['status'] === 'rejected'): ?>
+
+                        <span class="badge bg-danger">
+                          ❌ Offer Rejected
+                        </span>
+
+                      <?php endif; ?>
+
+                    </div>
+
+                  <?php else: ?>
+
+                    <form method="post"
+                          action="<?= base_url('/make_offer') ?>"
+                          class="d-flex align-items-center gap-2 mt-2">
+
+                      <?= csrf_field() ?>
+
+                      <input type="hidden"
+                             name="property_id"
+                             value="<?= $propertyId ?>">
+
+>>>>>>> 23d0e189831cabd73027fcd8d3cd4adc6c11159e
                       <input type="number"
                              step="0.01"
                              name="amount"
                              class="form-control w-50"
                              placeholder="Enter offer amount"
                              required>
+
+                             placeholder="Enter offer"
+                             required>
+
                       <button type="submit"
                               class="btn btn-primary btn-sm">
                         Make Offer
                       </button>
                     </form>
                     <div class="offer-status"></div>
+
+                    </form>
+
                   <?php endif; ?>
 
                   <div class="mt-3 text-center">
@@ -269,6 +336,7 @@ include __DIR__ . '/../partials/header.php';
                 </div>
 
               </div>
+
             </div>
 
           <?php endforeach; ?>
@@ -295,6 +363,71 @@ include __DIR__ . '/../partials/header.php';
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
 <script>
+
+const 'socket' = io('http://localhost:3000');
+
+socket.on('connect', () => {
+
+    console.log('Connected to websocket server');
+
+});
+
+socket.on('property-added', function(property) {
+
+    console.log('Realtime property received:', property);
+
+    const propertyContainer = document.getElementById('property-container');
+
+    const propertyHTML = `
+    
+    <div class="col-md-6 mb-4 realtime-property">
+
+        <div class="card shadow-sm border-0 rounded-4 h-100">
+
+            <img src="/${property.image_path}"
+                 class="card-img-top"
+                 style="height:250px; object-fit:cover;"
+                 alt="Property Image">
+
+            <div class="card-body">
+
+                <h5 class="card-title text-success fw-bold">
+                    ${property.title}
+                </h5>
+
+                <p>
+                    ${property.description}
+                </p>
+
+                <p class="fw-bold text-primary">
+                    ₱${parseFloat(property.price).toLocaleString()}
+                </p>
+
+                <p class="mb-1">
+                    <b>📍 Location:</b> ${property.location}
+                </p>
+
+                <p>
+                    <small>Seller: ${property.seller_name}</small>
+                </p>
+
+                <div class="alert alert-success mt-3 mb-0">
+                    New property added in realtime.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    `;
+
+    propertyContainer.insertAdjacentHTML('afterbegin', propertyHTML);
+
+});
+
+>>>>>>> 23d0e189831cabd73027fcd8d3cd4adc6c11159e
 const socket = io('http://localhost:3000', {
     transports: ['websocket', 'polling'],
     reconnection: true
@@ -331,6 +464,7 @@ function showNotification(message, type = 'success') {
     `;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 5000);
+    setTimeout(() => toast.remove(), 3000);
 }
 
 socket.on('connect', () => {
@@ -475,6 +609,11 @@ socket.on('property-added', function(property) {
                     <button type="submit" class="btn btn-primary btn-sm">Make Offer</button>
                 </form>
                 <div class="offer-status"></div>
+                <form method="post" action="/make_offer" class="d-flex align-items-center gap-2 mt-2">
+                    <input type="hidden" name="property_id" value="${propertyId}">
+                    <input type="number" step="0.01" name="amount" class="form-control w-50" placeholder="Enter offer" required>
+                    <button type="submit" class="btn btn-primary btn-sm">Make Offer</button>
+                </form>
                 <div class="alert alert-success mt-3 mb-0 small">
                     🎉 New property just listed!
                 </div>
@@ -494,6 +633,7 @@ socket.on('property-added', function(property) {
 });
 
 // 2. LISTEN FOR PROPERTY UPDATES
+// 2. LISTEN FOR PROPERTY UPDATES (FIX FOR YOUR ISSUE!)
 socket.on('property-updated', function(property) {
     console.log('✏️ Property updated:', property);
     
@@ -586,6 +726,7 @@ socket.on('property-unarchived', function(data) {
 // Debug: Log all events for troubleshooting
 socket.onAny((event, ...args) => {
     if (!['property-added', 'property-updated', 'property-deleted', 'property-archived', 'property-unarchived', 'offer-status-updated'].includes(event)) {
+    if (!['property-added', 'property-updated', 'property-deleted', 'property-archived', 'property-unarchived'].includes(event)) {
         console.log('Other event:', event, args);
     }
 });
@@ -611,6 +752,8 @@ if (!document.querySelector('#socket-styles')) {
     `;
     document.head.appendChild(style);
 }
+
+ 23d0e189831cabd73027fcd8d3cd4adc6c11159e
 </script>
 
 </body>
