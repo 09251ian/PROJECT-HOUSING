@@ -145,6 +145,7 @@ include __DIR__ . '/../partials/header.php';
               $existingOffer = $existingOffers[$propertyId] ?? null;
               $chatExist = $chatsExist[$propertyId] ?? false;
               $isFavorite = $favorites[$propertyId] ?? false;
+
             ?>
 
             <div class="col-md-6 mb-4 realtime-property">
@@ -154,6 +155,22 @@ include __DIR__ . '/../partials/header.php';
                 <img src="<?= !empty($property['image_path']) ? base_url($property['image_path']) : 'https://via.placeholder.com/400x250?text=No+Image' ?>"
                      class="card-img-top"
                      style="height:250px; object-fit:cover;"
+
+              // Fix image path for existing properties
+              $imagePath = !empty($property['image_path'] && file_exists(FCPATH . $property['image_path']) 
+                  ? base_url($property['image_path']) 
+                  : 'https://via.placeholder.com/400x250?text=No+Image';
+            ?>
+
+            <div class="col-md-6 mb-4 realtime-property" data-property-id="<?= $propertyId ?>">
+
+              <div class="card shadow-sm border-0 rounded-4 h-100">
+
+                <img src="<?= $imagePath ?>"
+                     class="card-img-top"
+                     style="height:250px; object-fit:cover;"
+                     onerror="this.src='https://via.placeholder.com/400x250?text=No+Image'"
+
                      alt="Property Image">
 
                 <div class="card-body">
@@ -308,7 +325,7 @@ include __DIR__ . '/../partials/header.php';
 
 <script>
 
-const socket = io('http://localhost:3000');
+const 'socket' = io('http://localhost:3000');
 
 socket.on('connect', () => {
 
@@ -370,6 +387,253 @@ socket.on('property-added', function(property) {
     propertyContainer.insertAdjacentHTML('afterbegin', propertyHTML);
 
 });
+
+const socket = io('http://localhost:3000', {
+    transports: ['websocket', 'polling'],
+    reconnection: true
+});
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Helper function to show notifications
+function showNotification(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    toast.style.cssText = 'z-index: 9999; animation: slideIn 0.3s ease-out;';
+    
+    let bgColor = '#28a745';
+    if (type === 'info') bgColor = '#17a2b8';
+    if (type === 'danger') bgColor = '#dc3545';
+    if (type === 'warning') bgColor = '#ffc107';
+    
+    toast.style.background = bgColor;
+    toast.style.color = 'white';
+    
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="bi ${type === 'success' ? 'bi-house-door-fill' : type === 'info' ? 'bi-pencil-square' : 'bi-trash-fill'} me-2"></i>
+            <div>${escapeHtml(message)}</div>
+            <button type="button" class="btn-close btn-close-white ms-3" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+socket.on('connect', () => {
+    console.log('✅ Connected to websocket server');
+});
+
+socket.on('disconnect', () => {
+    console.log('❌ Disconnected from websocket server');
+});
+
+socket.on('connect_error', (error) => {
+    console.error('Connection error:', error);
+});
+
+// 1. LISTEN FOR NEW PROPERTIES
+socket.on('property-added', function(property) {
+    console.log('📦 New property received:', property);
+    
+    const propertyContainer = document.getElementById('property-container');
+    
+    if (!propertyContainer) {
+        console.error('Property container not found!');
+        return;
+    }
+    
+    // Handle missing image path
+    let imagePath = 'https://via.placeholder.com/400x250?text=No+Image';
+    if (property.image_path && property.image_path !== 'null' && property.image_path !== 'undefined' && property.image_path !== '') {
+        imagePath = '/' + property.image_path.replace(/^\//, '');
+    }
+    
+    const escapedTitle = escapeHtml(property.title || 'Untitled');
+    const escapedDescription = escapeHtml(property.description ? property.description.substring(0, 150) : 'No description available');
+    const escapedLocation = escapeHtml(property.location || 'Location not specified');
+    const escapedSellerName = escapeHtml(property.seller_name || 'Unknown Seller');
+    const formattedPrice = parseFloat(property.price || 0).toLocaleString();
+    const propertyId = property.id || Date.now();
+    const sellerId = property.seller_id || 0;
+    
+    const propertyHTML = `
+    <div class="col-md-6 mb-4 realtime-property" data-property-id="${propertyId}">
+        <div class="card shadow-sm border-0 rounded-4 h-100">
+            <img src="${imagePath}"
+                 class="card-img-top"
+                 style="height:250px; object-fit:cover;"
+                 onerror="this.src='https://via.placeholder.com/400x250?text=No+Image'"
+                 alt="${escapedTitle}">
+            <div class="card-body">
+                <h5 class="card-title text-success fw-bold">
+                    ${escapedTitle}
+                </h5>
+                <p class="property-description">${escapedDescription}</p>
+                <p class="fw-bold text-primary property-price">
+                    ₱${formattedPrice}
+                </p>
+                <p class="mb-1 property-location">
+                    <b>📍 Location:</b> ${escapedLocation}
+                </p>
+                <p class="property-seller">
+                    <small>Seller: ${escapedSellerName}</small>
+                </p>
+                <a href="/message/${sellerId}/${propertyId}" 
+                   class="btn btn-outline-success btn-sm mt-2">
+                    💬 Message Seller
+                </a>
+                <form method="post" action="/buyer/favorites/toggle" class="d-inline">
+                    <input type="hidden" name="property_id" value="${propertyId}">
+                    <button type="submit" class="btn btn-sm btn-outline-primary ms-2">☆ Save</button>
+                </form>
+                <form method="post" action="/make_offer" class="d-flex align-items-center gap-2 mt-2">
+                    <input type="hidden" name="property_id" value="${propertyId}">
+                    <input type="number" step="0.01" name="amount" class="form-control w-50" placeholder="Enter offer" required>
+                    <button type="submit" class="btn btn-primary btn-sm">Make Offer</button>
+                </form>
+                <div class="alert alert-success mt-3 mb-0 small">
+                    🎉 New property just listed!
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+    
+    propertyContainer.insertAdjacentHTML('afterbegin', propertyHTML);
+    showNotification(`New property: ${escapedTitle}`, 'success');
+    
+    // Scroll to show new property
+    const newProperty = document.querySelector(`.realtime-property[data-property-id="${propertyId}"]`);
+    if (newProperty) {
+        newProperty.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
+
+// 2. LISTEN FOR PROPERTY UPDATES (FIX FOR YOUR ISSUE!)
+socket.on('property-updated', function(property) {
+    console.log('✏️ Property updated:', property);
+    
+    // Find the property card
+    const propertyCard = document.querySelector(`.realtime-property[data-property-id="${property.id}"]`);
+    
+    if (propertyCard) {
+        // Update title
+        const titleElement = propertyCard.querySelector('.card-title');
+        if (titleElement) titleElement.textContent = property.title;
+        
+        // Update description
+        const descElement = propertyCard.querySelector('.property-description');
+        if (descElement) descElement.textContent = property.description ? property.description.substring(0, 150) : 'No description available';
+        
+        // Update price
+        const priceElement = propertyCard.querySelector('.property-price');
+        if (priceElement) priceElement.textContent = `₱${parseFloat(property.price || 0).toLocaleString()}`;
+        
+        // Update location
+        const locationElement = propertyCard.querySelector('.property-location');
+        if (locationElement) locationElement.innerHTML = `<b>📍 Location:</b> ${escapeHtml(property.location || 'Location not specified')}`;
+        
+        // Update seller name
+        const sellerElement = propertyCard.querySelector('.property-seller');
+        if (sellerElement && property.seller_name) {
+            sellerElement.innerHTML = `<small>Seller: ${escapeHtml(property.seller_name)}</small>`;
+        }
+        
+        // Update image if changed
+        if (property.image_path && property.image_path !== 'null') {
+            const imgElement = propertyCard.querySelector('img');
+            let newImagePath = '/' + property.image_path.replace(/^\//, '');
+            imgElement.src = newImagePath;
+        }
+        
+        // Highlight the updated card
+        propertyCard.style.transition = 'background-color 0.5s';
+        propertyCard.style.backgroundColor = '#fff3cd';
+        setTimeout(() => {
+            propertyCard.style.backgroundColor = '';
+        }, 2000);
+        
+        showNotification(`Property updated: ${property.title}`, 'info');
+    } else {
+        console.log('Property card not found for ID:', property.id);
+    }
+});
+
+// 3. LISTEN FOR PROPERTY DELETION
+socket.on('property-deleted', function(data) {
+    console.log('🗑️ Property deleted:', data.id);
+    
+    const propertyCard = document.querySelector(`.realtime-property[data-property-id="${data.id}"]`);
+    if (propertyCard) {
+        propertyCard.style.transition = 'opacity 0.3s';
+        propertyCard.style.opacity = '0';
+        setTimeout(() => {
+            propertyCard.remove();
+        }, 300);
+        showNotification(`Property has been removed`, 'danger');
+    }
+});
+
+// 4. LISTEN FOR PROPERTY ARCHIVED
+socket.on('property-archived', function(data) {
+    console.log('📦 Property archived:', data.id);
+    
+    const propertyCard = document.querySelector(`.realtime-property[data-property-id="${data.id}"]`);
+    if (propertyCard) {
+        propertyCard.style.transition = 'opacity 0.3s';
+        propertyCard.style.opacity = '0';
+        setTimeout(() => {
+            propertyCard.remove();
+        }, 300);
+        showNotification(`Property has been archived`, 'warning');
+    }
+});
+
+// 5. LISTEN FOR PROPERTY UNARCHIVED (restored)
+socket.on('property-unarchived', function(data) {
+    console.log('🔄 Property unarchived:', data.id);
+    showNotification(`Property has been restored`, 'info');
+    // Optionally reload or fetch the property again
+    setTimeout(() => {
+        location.reload();
+    }, 2000);
+});
+
+// Debug: Log all events for troubleshooting
+socket.onAny((event, ...args) => {
+    if (!['property-added', 'property-updated', 'property-deleted', 'property-archived', 'property-unarchived'].includes(event)) {
+        console.log('Other event:', event, args);
+    }
+});
+
+// Add animation style
+if (!document.querySelector('#socket-styles')) {
+    const style = document.createElement('style');
+    style.id = 'socket-styles';
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .realtime-property {
+            animation: slideIn 0.5s ease-out;
+        }
+    `;
+    document.head.appendChild(style);
+}
 
 </script>
 

@@ -24,6 +24,8 @@ $user = $user ?? session()->get('user') ?? [];
     <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
   <?php endif; ?>
 
+  <div id="seller-realtime-alert-area"></div>
+
   <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
       <div class="section-title text-white fs-4 mb-0">
@@ -216,6 +218,45 @@ $user = $user ?? session()->get('user') ?? [];
 </div>
 
 <?php include __DIR__ . '/../partials/footer.php'; ?>
+
+<!-- SOCKET.IO -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const currentSellerName = <?= json_encode($user['name'] ?? '') ?>;
+const socket = io('http://localhost:3000');
+
+socket.on('connect', () => {
+    console.log('Seller dashboard connected to websocket server');
+});
+
+socket.on('property-added', function(property) {
+    console.log('Realtime property update received:', property);
+
+    const alertArea = document.getElementById('seller-realtime-alert-area');
+
+    if (!alertArea) {
+        return;
+    }
+
+    const message = property.seller_name === currentSellerName
+        ? 'Your new property was added successfully.'
+        : `New property listed by ${property.seller_name}.`;
+
+    const alertHTML = `
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <strong>Realtime Update:</strong> ${message}
+      <br>
+      <strong>Title:</strong> ${property.title}
+      <br>
+      <strong>Location:</strong> ${property.location}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    `;
+
+    alertArea.insertAdjacentHTML('afterbegin', alertHTML);
+});
+</script>
+
 </body>
 </html>
 
