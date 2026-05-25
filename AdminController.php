@@ -160,7 +160,11 @@ class AdminController extends BaseController
             }
 
             $propertyModel = new PropertyModel();
-            $propertyModel->insert([
+            
+            // Get seller name for the notification
+            $seller = $userModel->find($data['seller_id']);
+            
+            $propertyData = [
                 'seller_id' => (int) $data['seller_id'],
                 'title' => $data['title'],
                 'description' => $data['description'],
@@ -168,9 +172,19 @@ class AdminController extends BaseController
                 'location' => $data['location'],
                 'image_path' => $imagePath,
                 'is_archived' => 0,
-            ]);
+            ];
+            
+            $propertyModel->insert($propertyData);
+            $propertyId = $propertyModel->getInsertID();
+            
+            // Add ID and seller name for socket notification
+            $propertyData['id'] = $propertyId;
+            $propertyData['seller_name'] = $seller['name'] ?? 'Seller';
+            
+            // Send socket notification for real-time updates
+            $this->sendSocketNotification('new-property', $propertyData);
 
-            session()->setFlashdata('success', 'Property added successfully!');
+            session()->setFlashdata('success', 'Property added successfully and broadcasted in real-time!');
             return redirect()->to('/admin/properties');
         }
 
