@@ -39,7 +39,7 @@ io.on('connection', (socket) => {
         console.log(`💬 Private message from ${fromName} (${from}) to user ${to}`);
         console.log(`   Message: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`);
         
-        // Save message to database using built-in http module (no node-fetch needed)
+        // Save message to database using built-in http module
         const postData = JSON.stringify({
             sender_id: parseInt(from),
             receiver_id: parseInt(to),
@@ -165,22 +165,22 @@ app.post('/delete-property', (req, res) => {
     });
 });
 
-// ARCHIVE PROPERTY
+// ARCHIVE PROPERTY - Fixed to use 'archive-property' event
 app.post('/archive-property', (req, res) => {
     const data = req.body;
     console.log('📦 Archive property received:', data.id);
-    io.emit('property-archived', data);
+    io.emit('archive-property', data);  // Changed from 'property-archived' to 'archive-property'
     return res.json({
         success: true,
         message: 'Property archived broadcasted'
     });
 });
 
-// UNARCHIVE PROPERTY
+// UNARCHIVE PROPERTY - Fixed to use 'unarchive-property' event
 app.post('/unarchive-property', (req, res) => {
     const data = req.body;
     console.log('🔄 Unarchive property received:', data.id);
-    io.emit('property-unarchived', data);
+    io.emit('unarchive-property', data);  // Changed from 'property-unarchived' to 'unarchive-property'
     return res.json({
         success: true,
         message: 'Property unarchived broadcasted'

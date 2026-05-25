@@ -1,5 +1,5 @@
 <?php
-// app/Controllers/SocketController.php or add to existing controller
+// app/Controllers/SocketController.php
 
 namespace App\Controllers;
 
@@ -15,8 +15,8 @@ class SocketController extends BaseController
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 2); // Short timeout, don't block
-        curl_exec($ch);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+        $result = curl_exec($ch);
         curl_close($ch);
     }
 

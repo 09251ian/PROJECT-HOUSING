@@ -160,7 +160,11 @@ class AdminController extends BaseController
             }
 
             $propertyModel = new PropertyModel();
-            $propertyModel->insert([
+            
+            // Get seller name for the notification
+            $seller = $userModel->find($data['seller_id']);
+            
+            $propertyData = [
                 'seller_id' => (int) $data['seller_id'],
                 'title' => $data['title'],
                 'description' => $data['description'],
@@ -168,9 +172,19 @@ class AdminController extends BaseController
                 'location' => $data['location'],
                 'image_path' => $imagePath,
                 'is_archived' => 0,
-            ]);
+            ];
+            
+            $propertyModel->insert($propertyData);
+            $propertyId = $propertyModel->getInsertID();
+            
+            // Add ID and seller name for socket notification
+            $propertyData['id'] = $propertyId;
+            $propertyData['seller_name'] = $seller['name'] ?? 'Seller';
+            
+            // Send socket notification for real-time updates
+            $this->sendSocketNotification('new-property', $propertyData);
 
-            session()->setFlashdata('success', 'Property added successfully!');
+            session()->setFlashdata('success', 'Property added successfully and broadcasted in real-time!');
             return redirect()->to('/admin/properties');
         }
 
@@ -237,6 +251,69 @@ class AdminController extends BaseController
             'property' => $property,
             'sellers' => $sellers,
         ]);
+    }
+
+    public function deleteProperty()
+    {
+        $this->checkRoleOrRedirect('admin');
+        
+        $propertyId = $this->request->getPost('property_id');
+        
+        if (!$propertyId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Property ID required']);
+        }
+        
+        $propertyModel = new PropertyModel();
+        $property = $propertyModel->find($propertyId);
+        
+        if (!$property) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Property not found']);
+        }
+        
+        // Delete image file if exists
+        if (!empty($property['image_path']) && file_exists(FCPATH . $property['image_path'])) {
+            unlink(FCPATH . $property['image_path']);
+        }
+        
+        // Delete related records first (offers, favorites, messages)
+        $offerModel = new \App\Models\OfferModel();
+        $favoriteModel = new \App\Models\FavoriteModel();
+        $messageModel = new \App\Models\MessageModel();
+        
+        $offerModel->where('property_id', $propertyId)->delete();
+        $favoriteModel->where('property_id', $propertyId)->delete();
+        $messageModel->where('property_id', $propertyId)->delete();
+        
+        // Delete the property
+        $deleted = $propertyModel->delete($propertyId);
+        
+        if ($deleted) {
+            // Send socket notification for real-time deletion
+            $this->sendSocketNotification('delete-property', ['id' => $propertyId]);
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Property deleted successfully'
+            ]);
+        } else {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to delete property'
+            ]);
+        }
+    }
+
+    private function sendSocketNotification($endpoint, $data)
+    {
+        try {
+            $client = \Config\Services::curlrequest();
+            $client->post('http://localhost:3000/' . $endpoint, [
+                'json' => $data,
+                'timeout' => 2
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Socket notification failed: ' . $e->getMessage());
+        }
     }
 }
 
