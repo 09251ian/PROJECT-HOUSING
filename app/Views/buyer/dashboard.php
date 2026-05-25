@@ -300,6 +300,40 @@ const socket = io('http://localhost:3000', {
     reconnection: true
 });
 
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    notification.style.cssText = 'z-index: 9999; animation: slideIn 0.3s ease-out;';
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="bi bi-house-door-fill me-2"></i>
+            <div>${escapeHtml(message)}</div>
+            <button type="button" class="btn-close btn-close-white ms-3" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 5000);
+}
+
+if (!document.querySelector('#notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 // Helper function to escape HTML
 function escapeHtml(text) {
     if (!text) return '';
@@ -415,83 +449,66 @@ socket.on('offer-status-updated', function(data) {
 });
 
 // 1. LISTEN FOR NEW PROPERTIES
+// Listen for new properties added by admin
 socket.on('property-added', function(property) {
-    console.log('📦 New property received:', property);
+    console.log('📦 New property received by buyer:', property);
+    addPropertyToMarketplace(property);
+    showNotification(`New property listed: ${property.title}`, 'success');
+});
+
+function addPropertyToMarketplace(property) {
+    const propertiesContainer = document.getElementById('property-container');
+    if (!propertiesContainer) return;
     
-    const propertyContainer = document.getElementById('property-container');
-    
-    if (!propertyContainer) {
-        console.error('Property container not found!');
-        return;
-    }
-    
-    // Handle missing image path
     let imagePath = 'https://via.placeholder.com/400x250?text=No+Image';
-    if (property.image_path && property.image_path !== 'null' && property.image_path !== 'undefined' && property.image_path !== '') {
+    if (property.image_path && property.image_path !== 'null') {
         imagePath = '/' + property.image_path.replace(/^\//, '');
     }
     
-    const escapedTitle = escapeHtml(property.title || 'Untitled');
-    const escapedDescription = escapeHtml(property.description ? property.description.substring(0, 150) : 'No description available');
-    const escapedLocation = escapeHtml(property.location || 'Location not specified');
-    const escapedSellerName = escapeHtml(property.seller_name || 'Unknown Seller');
-    const formattedPrice = parseFloat(property.price || 0).toLocaleString();
-    const propertyId = property.id || Date.now();
-    const sellerId = property.seller_id || 0;
-    
     const propertyHTML = `
-    <div class="col-md-6 mb-4 realtime-property" data-property-id="${propertyId}">
-        <div class="card shadow-sm border-0 rounded-4 h-100">
-            <img src="${imagePath}"
-                 class="card-img-top"
-                 style="height:250px; object-fit:cover;"
-                 onerror="this.src='https://via.placeholder.com/400x250?text=No+Image'"
-                 alt="${escapedTitle}">
-            <div class="card-body">
-                <h5 class="card-title text-success fw-bold">
-                    ${escapedTitle}
-                </h5>
-                <p class="property-description">${escapedDescription}</p>
-                <p class="fw-bold text-primary property-price">
-                    ₱${formattedPrice}
-                </p>
-                <p class="mb-1 property-location">
-                    <b>📍 Location:</b> ${escapedLocation}
-                </p>
-                <p class="property-seller">
-                    <small>Seller: ${escapedSellerName}</small>
-                </p>
-                <a href="/message/${sellerId}/${propertyId}" 
-                   class="btn btn-outline-success btn-sm mt-2">
-                    💬 Message Seller
-                </a>
-                <form method="post" action="/buyer/favorites/toggle" class="d-inline">
-                    <input type="hidden" name="property_id" value="${propertyId}">
-                    <button type="submit" class="btn btn-sm btn-outline-primary ms-2">☆ Save</button>
-                </form>
-                <form method="post" action="/make_offer" class="d-flex align-items-center gap-2 mt-2 offer-form">
-                    <input type="hidden" name="property_id" value="${propertyId}">
-                    <input type="number" step="0.01" name="amount" class="form-control w-50" placeholder="Enter offer amount" required>
-                    <button type="submit" class="btn btn-primary btn-sm">Make Offer</button>
-                </form>
-                <div class="offer-status"></div>
-                <div class="alert alert-success mt-3 mb-0 small">
-                    🎉 New property just listed!
+        <div class="col-md-6 mb-4 realtime-property" data-property-id="${property.id}">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <img src="${imagePath}" class="card-img-top" style="height:250px; object-fit:cover;" 
+                     onerror="this.src='https://via.placeholder.com/400x250?text=No+Image'" 
+                     alt="Property Image">
+                <div class="card-body">
+                    <h5 class="card-title text-success fw-bold">${escapeHtml(property.title)}</h5>
+                    <p>${escapeHtml(property.description ? property.description.substring(0, 150) : '')}</p>
+                    <p class="fw-bold text-primary">₱${parseFloat(property.price || 0).toLocaleString()}</p>
+                    <p class="mb-1"><b>📍 Location:</b> ${escapeHtml(property.location)}</p>
+                    <p><small>Seller: ${escapeHtml(property.seller_name)}</small></p>
+                    <a href="/message/${property.seller_id}/${property.id}" class="btn btn-outline-success btn-sm mt-2">💬 Message Seller</a>
+                    <form method="post" action="/buyer/favorites/toggle" class="d-inline">
+                        <input type="hidden" name="property_id" value="${property.id}">
+                        <button type="submit" class="btn btn-sm btn-outline-primary ms-2">☆ Save</button>
+                    </form>
+                    <form method="post" action="/make_offer" class="d-flex align-items-center gap-2 mt-2 offer-form">
+                        <input type="hidden" name="property_id" value="${property.id}">
+                        <input type="number" step="0.01" name="amount" class="form-control w-50" placeholder="Enter offer amount" required>
+                        <button type="submit" class="btn btn-primary btn-sm">Make Offer</button>
+                    </form>
+                    <div class="offer-status"></div>
+                    <div class="alert alert-success mt-3 mb-0 small">
+                        🎉 New property just listed!
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     `;
     
-    propertyContainer.insertAdjacentHTML('afterbegin', propertyHTML);
-    showNotification(`New property: ${escapedTitle}`, 'success');
+    propertiesContainer.insertAdjacentHTML('afterbegin', propertyHTML);
     
-    // Scroll to show new property
-    const newProperty = document.querySelector(`.realtime-property[data-property-id="${propertyId}"]`);
+    // Highlight the new property
+    const newProperty = document.querySelector(`.realtime-property[data-property-id="${property.id}"]`);
     if (newProperty) {
+        newProperty.style.transition = 'background-color 0.5s';
+        newProperty.style.backgroundColor = '#2a5a2a';
+        setTimeout(() => {
+            newProperty.style.backgroundColor = '';
+        }, 3000);
         newProperty.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-});
+}
 
 // 2. LISTEN FOR PROPERTY UPDATES
 socket.on('property-updated', function(property) {
