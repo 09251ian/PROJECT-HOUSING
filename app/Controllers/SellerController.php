@@ -229,7 +229,6 @@ class SellerController extends BaseController
         ];
 
         if (!$this->validate($rules)) {
-
             return redirect()
                 ->back()
                 ->withInput()
@@ -243,15 +242,6 @@ class SellerController extends BaseController
         if ($img && $img->isValid() && !$img->hasMoved()) {
             $newName = $img->getRandomName();
             $img->move(FCPATH . 'uploads', $newName);
-
-        $img = $this->request->getFile('image');
-
-        if ($img && $img->isValid() && !$img->hasMoved()) {
-
-            $newName = $img->getRandomName();
-
-            $img->move(FCPATH . 'uploads', $newName);
-
             $imagePath = 'uploads/' . $newName;
         }
 
@@ -269,7 +259,6 @@ class SellerController extends BaseController
         ];
 
         $propertyModel->insert($propertyData);
-
         $propertyId = $propertyModel->getInsertID();
 
         // REALTIME DATA
@@ -280,87 +269,16 @@ class SellerController extends BaseController
         $this->sendSocketNotification('new-property', $propertyData);
 
         session()->setFlashdata('success', 'Property added successfully!');
-        $client = \Config\Services::curlrequest();
-
-        try {
-
-            $client->post('http://localhost:3000/new-property', [
-                'json' => $propertyData
-            ]);
-
-        } catch (\Exception $e) {
-
-            log_message('error', 'WebSocket Error: ' . $e->getMessage());
-        }
-
-        session()->setFlashdata('success', 'Property added successfully!');
-
-        return redirect()->to('/seller/dashboard');
-    }
-
-    public function offerAction()
-    {
-        $user = $this->checkRoleOrRedirect('seller');
-
-        $offerId = $this->request->getPost('offer_id');
-
-        $action = $this->request->getPost('action');
-
-        if (!$offerId || !$action) {
-
-            session()->setFlashdata('error', 'Invalid request.');
-
-            return redirect()->to('/seller/dashboard');
-        }
-
-        $offerModel = new OfferModel();
-
-        if ($action === 'accept') {
-
-            $offerModel->update($offerId, ['status' => 'accepted']);
-
-            $offer = $offerModel->find($offerId);
-
-            if ($offer) {
-
-                $offerModel->where('property_id', $offer['property_id'])
-                    ->where('id !=', $offerId)
-                    ->set(['status' => 'rejected'])
-                    ->update();
-            }
-
-            session()->setFlashdata('success', 'Offer accepted successfully!');
-
-        } elseif ($action === 'reject') {
-
-            $offerModel->update($offerId, ['status' => 'rejected']);
-
-            session()->setFlashdata('success', 'Offer rejected successfully!');
-
-        } else {
-
-            session()->setFlashdata('error', 'Invalid action.');
-        }
-
         return redirect()->to('/seller/dashboard');
     }
 
     public function archived()
     {
         $user = $this->checkRoleOrRedirect('seller');
- 
         $sellerId = $user['id'];
 
         $propertyModel = new PropertyModel();
         $page = (int) ($this->request->getGet('page') ?? 1);
-
-
-        $sellerId = $user['id'];
-
-        $propertyModel = new PropertyModel();
-
-        $page = (int) ($this->request->getGet('page') ?? 1);
-
         $perPage = 10;
 
         $properties = $propertyModel
@@ -381,7 +299,6 @@ class SellerController extends BaseController
     public function editProperty($id = null)
     {
         $user = $this->checkRoleOrRedirect('seller');
-
         $propertyModel = new PropertyModel();
 
         $property = $propertyModel
@@ -390,13 +307,7 @@ class SellerController extends BaseController
             ->first();
 
         if (!$property) {
- 
             session()->setFlashdata('error', 'Property not found.');
-
-
-            session()->setFlashdata('error', 'Property not found.');
-
- 
             return redirect()->to('/seller/dashboard');
         }
 
@@ -416,8 +327,6 @@ class SellerController extends BaseController
             ];
 
             if (!$this->validate($rules)) {
-
-
                 return redirect()
                     ->back()
                     ->withInput()
@@ -435,17 +344,6 @@ class SellerController extends BaseController
                     unlink(FCPATH . $property['image_path']);
                 }
             } else {
-
-            if ($img && $img->isValid() && !$img->hasMoved()) {
-
-                $newName = $img->getRandomName();
-
-                $img->move(FCPATH . 'uploads', $newName);
-
-                $data['image_path'] = 'uploads/' . $newName;
-
-            } else {
-
                 $data['image_path'] = $property['image_path'];
             }
 
@@ -465,9 +363,6 @@ class SellerController extends BaseController
             
             $this->sendSocketNotification('update-property', $notificationData);
             session()->setFlashdata('success', 'Property updated successfully!');
-
-            session()->setFlashdata('success', 'Property updated successfully!');
-
             return redirect()->to('/seller/dashboard');
         }
 
@@ -490,18 +385,12 @@ class SellerController extends BaseController
 
         if (!$property) {
             session()->setFlashdata('error', 'Property not found.');
-
-            session()->setFlashdata('error', 'Property not found.');
-
             return redirect()->to('/seller/dashboard');
         }
 
         $propertyModel->update($propertyId, ['is_archived' => 1]);
         $this->sendSocketNotification('archive-property', ['id' => $propertyId]);
         session()->setFlashdata('success', 'Property archived successfully!');
-
-        session()->setFlashdata('success', 'Property archived successfully!');
-
         return redirect()->to('/seller/dashboard');
     }
 
@@ -509,9 +398,6 @@ class SellerController extends BaseController
     {
         $user = $this->checkRoleOrRedirect('seller');
         $propertyId = $this->request->getPost('property_id');
-
-        $propertyId = $this->request->getPost('property_id');
-
         $propertyModel = new PropertyModel();
 
         $property = $propertyModel
@@ -521,10 +407,6 @@ class SellerController extends BaseController
 
         if (!$property) {
             session()->setFlashdata('error', 'Property not found.');
-
-
-            session()->setFlashdata('error', 'Property not found.');
-
             return redirect()->to('/seller/archived');
         }
 
@@ -559,34 +441,6 @@ class SellerController extends BaseController
         }
 
         $propertyModel = new PropertyModel();
-
-        session()->setFlashdata('success', 'Property restored successfully!');
-
-        return redirect()->to('/seller/archived');
-    }
-
-    public function message($buyerId, $propertyId)
-    {
-        $this->checkRoleOrRedirect('seller');
-
-        return redirect()->to("/message/{$buyerId}/{$propertyId}");
-    }
-
-    public function delete()
-    {
-        $user = $this->checkRoleOrRedirect('seller');
-
-        $propertyId = $this->request->getPost('property_id');
-
-        if (!$propertyId) {
-
-            session()->setFlashdata('error', 'Invalid property id.');
-
-            return redirect()->to('/seller/archived');
-        }
-
-        $propertyModel = new \App\Models\PropertyModel();
-
         $property = $propertyModel
             ->where('id', $propertyId)
             ->where('seller_id', $user['id'])
@@ -594,9 +448,6 @@ class SellerController extends BaseController
 
         if (!$property) {
             session()->setFlashdata('error', 'Property not found.');
-
-            session()->setFlashdata('error', 'Property not found.');
-
             return redirect()->to('/seller/archived');
         }
 
@@ -608,15 +459,6 @@ class SellerController extends BaseController
         $propertyModel->delete($propertyId);
         $this->sendSocketNotification('delete-property', ['id' => $propertyId]);
         session()->setFlashdata('success', 'Property permanently deleted.');
-
-            unlink(FCPATH . $property['image_path']);
-        }
-
-        // DELETE PROPERTY
-        $propertyModel->delete($propertyId);
-
-        session()->setFlashdata('success', 'Property permanently deleted.');
-
         return redirect()->to('/seller/archived');
     }
 }

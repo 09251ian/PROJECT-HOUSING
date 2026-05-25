@@ -94,7 +94,6 @@ $user = $user ?? session()->get('user') ?? [];
           <?php foreach ($properties as $property): ?>
             <div class="col-lg-6 mb-4">
               <div class="property-card h-100" data-property-id="<?= $property['id'] ?>">
-              <div class="property-card h-100">
                 <div class="property-media">
                   <img
                     src="<?= !empty($property['image_path']) ? base_url($property['image_path']) : 'https://via.placeholder.com/800x500?text=No+Image' ?>"
@@ -189,64 +188,6 @@ $user = $user ?? session()->get('user') ?? [];
                         <div class="text-muted small">No offers yet.</div>
                       <?php endif; ?>
                     </div>
-                    <?php $offers = $offersData[$property['id']] ?? []; ?>
-                    <?php if (!empty($offers)): ?>
-                      <div class="d-grid gap-2">
-                        <?php foreach ($offers as $offer): ?>
-                          <div class="app-card" style="padding:12px;">
-                            <div class="d-flex align-items-center justify-content-between">
-                              <div class="fw-bold">
-                                <i class="bi bi-person me-1"></i><?= esc($offer['buyer_name'] ?? '') ?>
-                              </div>
-                              <div class="text-primary fw-bold">₱<?= number_format((float)($offer['amount'] ?? 0), 2) ?></div>
-                            </div>
-                            <div class="mt-2 d-flex align-items-center justify-content-between">
-                              <?php
-                                $status = $offer['status'] ?? '';
-                                $pill = match($status) {
-                                  'accepted' => 'property-pill--success',
-                                  'rejected' => 'property-pill--danger',
-                                  default => 'property-pill--warning'
-                                };
-                              ?>
-                              <span class="property-pill <?= $pill ?>"><?= ucfirst($status) ?></span>
-                            </div>
-
-                            <?php if (($offer['status'] ?? '') === 'pending'): ?>
-                              <div class="d-flex gap-2 mt-2">
-                                <form method="post" action="<?= base_url('/seller/offer_action') ?>" class="m-0 flex-fill">
-                                  <?= csrf_field() ?>
-                                  <input type="hidden" name="offer_id" value="<?= (int)$offer['id'] ?>">
-                                  <input type="hidden" name="action" value="accept">
-                                  <button type="submit" class="btn btn-success btn-sm w-100">
-                                    <i class="bi bi-check2-circle me-1"></i>Accept
-                                  </button>
-                                </form>
-                                <form method="post" action="<?= base_url('/seller/offer_action') ?>" class="m-0 flex-fill">
-                                  <?= csrf_field() ?>
-                                  <input type="hidden" name="offer_id" value="<?= (int)$offer['id'] ?>">
-                                  <input type="hidden" name="action" value="reject">
-                                  <button type="submit" class="btn btn-danger btn-sm w-100">
-                                    <i class="bi bi-x-circle me-1"></i>Reject
-                                  </button>
-                                </form>
-                              </div>
-                            <?php endif; ?>
-
-                            <div class="d-flex gap-2 flex-wrap mt-2">
-                              <a href="<?= base_url('/message/' . $offer['buyer_id'] . '/' . $property['id']) ?>" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-chat-left-text me-1"></i>Message
-                              </a>
-                              <a href="<?= base_url('/profile/' . $offer['buyer_id']) ?>" class="btn btn-outline-light btn-sm">
-                                <i class="bi bi-person me-1"></i>Profile
-                              </a>
-                            </div>
-                          </div>
-                        <?php endforeach; ?>
-                      </div>
-                    <?php else: ?>
-                      <div class="text-muted small">No offers yet.</div>
-                    <?php endif; ?>
                   </div>
 
                   <div>
@@ -272,7 +213,6 @@ $user = $user ?? session()->get('user') ?? [];
         </div>
       <?php else: ?>
         <div class="text-muted">You haven't added any properties yet.</div>
-        <div class="text-muted">You haven’t added any properties yet.</div>
       <?php endif; ?>
 
     </div>
@@ -418,14 +358,6 @@ socket.on('new-offer', function(data) {
 // Listen for property updates
 socket.on('property-added', function(property) {
     console.log('New property received:', property);
-const socket = io('http://localhost:3000');
-
-socket.on('connect', () => {
-    console.log('Seller dashboard connected to websocket server');
-});
-
-socket.on('property-added', function(property) {
-    console.log('Realtime property update received:', property);
 
     const alertArea = document.getElementById('seller-realtime-alert-area');
 
@@ -466,8 +398,3 @@ socket.onAny((event, ...args) => {
 </script>
 </body>
 </html>
-=======
-});
-</script>
-
-</body>

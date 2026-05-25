@@ -57,4 +57,56 @@ class MessageController extends BaseController
             'userRole' => $user['role'] ?? null,
         ]);
     }
+
+    /**
+     * API endpoint for WebSocket to save messages
+     * Called by socket-server when a message is sent via WebSocket
+     */
+    public function saveMessage()
+{
+    // Log that the endpoint was hit
+    log_message('info', 'saveMessage endpoint called');
+    
+    // Get JSON input
+    $json = $this->request->getJSON();
+    
+    // Log the received data
+    log_message('info', 'Received data: ' . json_encode($json));
+    
+    // Validate
+    if (!$json || !$json->sender_id || !$json->receiver_id || !$json->message) {
+        $error = 'Missing required fields';
+        log_message('error', $error);
+        return $this->response
+            ->setStatusCode(400)
+            ->setHeader('Access-Control-Allow-Origin', '*')
+            ->setJSON(['error' => $error]);
+    }
+    
+    // Save to database
+    $messageModel = new \App\Models\MessageModel();
+    $data = [
+        'sender_id' => $json->sender_id,
+        'receiver_id' => $json->receiver_id,
+        'message' => $json->message,
+        'property_id' => $json->property_id ?? null,
+        'created_at' => date('Y-m-d H:i:s')
+    ];
+    
+    $messageId = $messageModel->insert($data);
+    
+    if ($messageId) {
+        return $this->response
+            ->setHeader('Access-Control-Allow-Origin', '*')
+            ->setJSON([
+                'success' => true,
+                'message_id' => $messageId
+            ]);
+    } else {
+        return $this->response
+            ->setStatusCode(500)
+            ->setHeader('Access-Control-Allow-Origin', '*')
+            ->setJSON(['error' => 'Failed to save message']);
+    }
+}
 }

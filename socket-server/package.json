@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "name": "property-marketplace-socket",
   "version": "1.0.0",
   "description": "Socket.IO server for property marketplace",
@@ -17,24 +16,3 @@
     "nodemon": "^3.0.1"
   }
 }
-=======
-  "name": "housing-websocket",
-  "version": "1.0.0",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-
-    "express": "^4.19.2",
-    "socket.io": "^4.7.5",
-    "cors": "^2.8.5"
-  }
-}
-
-    "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "socket.io": "^4.8.3"
-  }
-}
->>>>>>> 23d0e189831cabd73027fcd8d3cd4adc6c11159e

@@ -51,5 +51,89 @@ include __DIR__ . '/../partials/header.php';
   </div>
 </div>
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+// Get user info from PHP
+const currentUserId = <?= json_encode($user['id'] ?? 0) ?>;
+const currentUserName = <?= json_encode($user['name'] ?? '') ?>;
+const receiverId = <?= json_encode($receiverId ?? 0) ?>;
+const propertyId = <?= json_encode($propertyId ?? 0) ?>;
+
+// Connect to WebSocket server
+const socket = io('http://localhost:3000', {
+    transports: ['websocket', 'polling'],
+    reconnection: true
+});
+
+// Register user when connected
+socket.on('connect', () => {
+    console.log('Connected to WebSocket');
+    socket.emit('register', currentUserId);
+});
+
+// Listen for incoming messages
+socket.on('private message', (data) => {
+    if (data.from == receiverId) {
+        addMessageToChat(data.fromName, data.content, data.timestamp, false);
+    }
+});
+
+// Send message via WebSocket
+function sendMessageRealtime(message) {
+    const messageData = {
+        to: receiverId,
+        from: currentUserId,
+        fromName: currentUserName,
+        content: message,
+        propertyId: propertyId,
+        timestamp: new Date().toISOString()
+    };
+    socket.emit('private message', messageData);
+    addMessageToChat(currentUserName, message, new Date().toISOString(), true);
+}
+
+// Add message to chat box
+function addMessageToChat(senderName, message, timestamp, isSender) {
+    const chatBox = document.getElementById('chat-box');
+    if (!chatBox) return;
+    
+    // Remove "No messages yet" if exists
+    if (chatBox.children.length === 1 && chatBox.children[0].tagName === 'P') {
+        chatBox.innerHTML = '';
+    }
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${isSender ? 'sender' : 'receiver'}`;
+    messageDiv.innerHTML = `
+        <small class="chat-meta">${isSender ? 'You' : escapeHtml(senderName)} - ${new Date(timestamp).toLocaleString()}</small>
+        <div class="mt-1">${escapeHtml(message)}</div>
+    `;
+    chatBox.appendChild(messageDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Override form submission
+const chatForm = document.querySelector('.input-group')?.closest('form');
+if (chatForm) {
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const messageInput = document.querySelector('input[name="message"]');
+        const message = messageInput?.value.trim();
+        if (message) {
+            sendMessageRealtime(message);
+            messageInput.value = '';
+            messageInput.focus();
+        }
+    });
+}
+</script>
+
 <?php include __DIR__ . '/../partials/footer.php'; ?>
 

@@ -15,9 +15,6 @@ $routes->get('/logout', 'Auth::logout');
 $routes->get('/register', 'Auth::registerForm');
 $routes->post('/register', 'Auth::register');
 
-$routes->get('/register', 'Auth::registerForm'); // for later
-$routes->post('/register', 'Auth::register');    // for later
-
 $routes->get('/buyer/dashboard', 'BuyerController::dashboard');
 $routes->get('/buyer/favorites', 'FavoriteController::favorites');
 $routes->post('/buyer/favorites/toggle', 'FavoriteController::toggleFavorite');
@@ -52,8 +49,4 @@ $routes->post('/update-property-notify', 'SocketController::updatePropertyNotify
 $routes->post('/delete-property-notify', 'SocketController::deletePropertyNotify');
 $routes->post('/archive-property-notify', 'SocketController::archivePropertyNotify');
 $routes->post('/unarchive-property-notify', 'SocketController::unarchivePropertyNotify');
-// Add these to your routes file
-
-
-
- 
+$routes->post('/api/save-message', 'MessageController::saveMessage');
