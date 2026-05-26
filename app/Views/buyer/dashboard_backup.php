@@ -32,7 +32,7 @@ $user = $user ?? session()->get('user') ?? [];
     .pagination .page-link {
         background-color: #16213e;
         border-color: #0f3460;
-        color: #fff;
+        color: #e94560;
         padding: 8px 16px;
         font-size: 14px;
     }
@@ -254,7 +254,7 @@ include __DIR__ . '/../partials/header.php';
     </div>
 
     <!-- Showing results info -->
-    <div class="text-center text-white small mb-4">
+    <div class="text-center text-muted small mb-4">
         Showing <strong><?= $pager->firstItem ?></strong> to <strong><?= $pager->lastItem ?></strong> 
         of <strong><?= $pager->total ?></strong> properties
     </div>
@@ -262,6 +262,8 @@ include __DIR__ . '/../partials/header.php';
 
     <!-- Showing results info -->
     <div class="text-center text-muted small mb-4">
+        Showing <strong><?= $pager->getCurrentPageFirstItem() ?></strong> to <strong><?= $pager->getCurrentPageLastItem() ?></strong> 
+        of <strong><?= $pager->getTotal() ?></strong> properties
     </div>
 
   <!-- Empty state for when all properties are removed -->

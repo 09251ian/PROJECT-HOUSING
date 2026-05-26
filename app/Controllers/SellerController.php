@@ -68,29 +68,43 @@ class SellerController extends BaseController
     public function dashboard()
     {
         $user = $this->checkRoleOrRedirect('seller');
-
         $sellerId = $user['id'];
-
+        
         $propertyModel = new PropertyModel();
-
-        $page = (int) ($this->request->getGet('page') ?? 1);
-
-        $perPage = 10;
-
-        $properties = $propertyModel
+        
+        // Get current page from URL, default to 1
+        $currentPage = (int) ($this->request->getGet('page') ?? 1);
+        $perPage = 10; // 10 properties per page
+        
+        // Build query
+        $query = $propertyModel
             ->where('seller_id', $sellerId)
-            ->where('is_archived', 0)
-            ->orderBy('id', 'DESC')
-            ->paginate($perPage, 'default', $page);
-
-        $pager = $propertyModel->pager;
-
+            ->where('is_archived', 0);
+        
+        // Get total count for pagination
+        $total = $query->countAllResults(false);
+        
+        // Get paginated results
+        $properties = $query->orderBy('id', 'DESC')
+                            ->limit($perPage, ($currentPage - 1) * $perPage)
+                            ->get()
+                            ->getResultArray();
+        
+        // Calculate pagination data
+        $lastPage = ceil($total / $perPage);
+        $pager = (object) [
+            'currentPage' => $currentPage,
+            'lastPage' => $lastPage,
+            'total' => $total,
+            'perPage' => $perPage,
+            'firstItem' => $total > 0 ? (($currentPage - 1) * $perPage) + 1 : 0,
+            'lastItem' => min($currentPage * $perPage, $total)
+        ];
+        
+        // Get offers data for properties (your existing code)
         $offerModel = new OfferModel();
-
         $offersData = [];
-
         foreach ($properties as $property) {
-
             $offersData[$property['id']] = $offerModel
                 ->select('offers.*, users.name as buyer_name')
                 ->join('users', 'users.id = offers.buyer_id')
@@ -98,11 +112,10 @@ class SellerController extends BaseController
                 ->orderBy('id', 'DESC')
                 ->findAll();
         }
-
-        // Get chats data for each property
+        
+        // Get chats data for each property (your existing code)
         $messageModel = new MessageModel();
         $chatsData = [];
-        
         foreach ($properties as $property) {
             $chatsData[$property['id']] = $messageModel
                 ->select('users.id as buyer_id, users.name as buyer_name')
@@ -114,7 +127,7 @@ class SellerController extends BaseController
                 ->groupBy('users.id')
                 ->findAll();
         }
-
+        
         return view('seller/dashboard', [
             'user' => $user,
             'properties' => $properties,

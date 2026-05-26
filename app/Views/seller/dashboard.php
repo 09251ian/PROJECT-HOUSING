@@ -11,6 +11,38 @@ $user = $user ?? session()->get('user') ?? [];
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="<?= base_url('assets/app.css') ?>" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    /* Pagination Styles */
+    .pagination {
+      margin: 0;
+    }
+
+    .pagination .page-link {
+      background-color: #16213e;
+      border-color: #0f3460;
+      color: white;
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+
+    .pagination .page-link:hover {
+      background-color: #0f3460;
+      color: white;
+      border-color: #e94560;
+    }
+
+    .pagination .page-item.active .page-link {
+      background-color: #e94560;
+      border-color: #e94560;
+      color: white;
+    }
+
+    .pagination .page-item.disabled .page-link {
+      background-color: #16213e;
+      color: #6c757d;
+      border-color: #0f3460;
+    }
+  </style>
 </head>
 <body class="app-dark">
 
@@ -215,6 +247,55 @@ $user = $user ?? session()->get('user') ?? [];
         <div class="text-muted">You haven't added any properties yet.</div>
       <?php endif; ?>
 
+      <!-- PAGINATION AT THE BOTTOM -->
+      <?php if (isset($pager) && $pager->lastPage > 1): ?>
+      <div class="d-flex justify-content-center mt-5 mb-4">
+          <nav aria-label="Page navigation">
+              <ul class="pagination">
+                  <!-- Previous Button -->
+                  <?php if ($pager->currentPage > 1): ?>
+                      <li class="page-item">
+                          <a class="page-link" href="?page=<?= $pager->currentPage - 1 ?>" aria-label="Previous">
+                              <span aria-hidden="true">&laquo; Prev</span>
+                          </a>
+                      </li>
+                  <?php else: ?>
+                      <li class="page-item disabled">
+                          <span class="page-link">&laquo; Prev</span>
+                      </li>
+                  <?php endif; ?>
+
+                  <!-- Page Numbers -->
+                  <?php for ($i = 1; $i <= $pager->lastPage; $i++): ?>
+                      <li class="page-item <?= $i == $pager->currentPage ? 'active' : '' ?>">
+                          <a class="page-link" href="?page=<?= $i ?>">
+                              <?= $i ?>
+                          </a>
+                      </li>
+                  <?php endfor; ?>
+
+                  <!-- Next Button -->
+                  <?php if ($pager->currentPage < $pager->lastPage): ?>
+                      <li class="page-item">
+                          <a class="page-link" href="?page=<?= $pager->currentPage + 1 ?>" aria-label="Next">
+                              <span aria-hidden="true">Next &raquo;</span>
+                          </a>
+                      </li>
+                  <?php else: ?>
+                      <li class="page-item disabled">
+                          <span class="page-link">Next &raquo;</span>
+                      </li>
+                  <?php endif; ?>
+              </ul>
+          </nav>
+      </div>
+
+      <!-- Showing results info -->
+      <div class="text-center text-white small mb-4">
+          Showing <strong><?= $pager->firstItem ?></strong> to <strong><?= $pager->lastItem ?></strong> 
+          of <strong><?= $pager->total ?></strong> properties
+      </div>
+      <?php endif; ?>
     </div>
   </div>
 </div>
