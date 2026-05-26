@@ -27,6 +27,32 @@
       min-width: 300px;
       animation: slideIn 0.3s ease-out;
     }
+    /* Pagination Styles */
+    .pagination {
+        margin: 0;
+    }
+    .pagination .page-link {
+        background-color: #16213e;
+        border-color: #0f3460;
+        color: white;
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    .pagination .page-link:hover {
+        background-color: #0f3460;
+        color: white;
+        border-color: #e94560;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #e94560;
+        border-color: #e94560;
+        color: white;
+    }
+    .pagination .page-item.disabled .page-link {
+        background-color: #16213e;
+        color: #6c757d;
+        border-color: #0f3460;
+    }
   </style>
 </head>
 <body class="app-dark">
@@ -49,16 +75,49 @@
 
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="text-white mb-0">Users Management</h3>
-    <div class="text-muted">
+    <div class="text-white">
       <i class="bi bi-people-fill"></i> 
-      <span id="total-buyers"><?= count($buyers ?? []) ?></span> Buyers | 
-      <span id="total-sellers"><?= count($sellers ?? []) ?></span> Sellers
+      <span id="total-buyers" style="color: #ffffff;"><?= $buyersPager->total ?? 0 ?></span> Buyers | 
+      <span id="total-sellers" style="color: #ffffff;"><?= $sellersPager->total ?? 0 ?></span> Sellers
+    </div>
+  </div>
+  
+  <!-- Buyers Search Bar -->
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <form method="get" action="<?= base_url('/admin/users') ?>" class="d-flex gap-2">
+        <input type="hidden" name="type" value="buyers">
+        <div class="input-group">
+          <span class="input-group-text bg-dark text-secondary border-secondary">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" 
+                 name="buyers_search" 
+                 class="form-control bg-dark text-white border-secondary" 
+                 placeholder="Search buyers by name, email, or contact..." 
+                 value="<?= esc($buyersSearch ?? '') ?>">
+          <button class="btn btn-primary" type="submit">
+            <i class="bi bi-search"></i> Search
+          </button>
+        </div>
+        <?php if (!empty($buyersSearch)): ?>
+          <a href="<?= base_url('/admin/users') ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Clear
+          </a>
+        <?php endif; ?>
+      </form>
+      <?php if (!empty($buyersSearch)): ?>
+        <div class="mt-2 text-white small">
+          <i class="bi bi-info-circle"></i> Buyers results for: "<strong class="text-warning"><?= esc($buyersSearch) ?></strong>"
+        </div>
+      <?php endif; ?>
     </div>
   </div>
 
-  <h5 class="text-white-50 mt-4">
+  <!-- BUYERS SECTION -->
+  <h5 class="text-white mt-4">
     <i class="bi bi-person-badge-fill"></i> Buyers 
-    <span class="badge bg-info ms-2" id="buyers-count-badge"><?= count($buyers ?? []) ?></span>
+    <span class="badge bg-info ms-2" id="buyers-count-badge"><?= $buyersPager->total ?? 0 ?></span>
   </h5>
   <div class="table-responsive app-table-wrap">
     <table class="table table-dark table-striped align-middle">
@@ -87,9 +146,72 @@
     </table>
   </div>
 
-  <h5 class="text-white-50 mt-4">
+  <!-- Buyers Pagination -->
+  <?php if (isset($buyersPager) && $buyersPager->lastPage > 1): ?>
+  <div class="d-flex justify-content-center mt-3">
+      <nav aria-label="Buyers pagination">
+          <ul class="pagination">
+              <?php if ($buyersPager->currentPage > 1): ?>
+                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage - 1 ?>&sellers_page=<?= $sellersPager->currentPage ?? 1 ?>">&laquo; Prev</a></li>
+              <?php else: ?>
+                  <li class="page-item disabled"><span class="page-link">&laquo; Prev</span></li>
+              <?php endif; ?>
+
+              <?php for ($i = 1; $i <= $buyersPager->lastPage; $i++): ?>
+                  <li class="page-item <?= $i == $buyersPager->currentPage ? 'active' : '' ?>">
+                      <a class="page-link" href="?buyers_page=<?= $i ?>&sellers_page=<?= $sellersPager->currentPage ?? 1 ?>"><?= $i ?></a>
+                  </li>
+              <?php endfor; ?>
+
+              <?php if ($buyersPager->currentPage < $buyersPager->lastPage): ?>
+                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage + 1 ?>&sellers_page=<?= $sellersPager->currentPage ?? 1 ?>">Next &raquo;</a></li>
+              <?php else: ?>
+                  <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
+              <?php endif; ?>
+          </ul>
+      </nav>
+  </div>
+  <div class="text-center text-white small mb-3">
+      Showing <strong><?= $buyersPager->firstItem ?></strong> to <strong><?= $buyersPager->lastItem ?></strong> of <strong><?= $buyersPager->total ?></strong> buyers
+  </div>
+  <?php endif; ?>
+
+  <!-- Sellers Search Bar -->
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <form method="get" action="<?= base_url('/admin/users') ?>" class="d-flex gap-2">
+        <input type="hidden" name="type" value="sellers">
+        <div class="input-group">
+          <span class="input-group-text bg-dark text-secondary border-secondary">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" 
+                 name="sellers_search" 
+                 class="form-control bg-dark text-white border-secondary" 
+                 placeholder="Search sellers by name, email, or contact..." 
+                 value="<?= esc($sellersSearch ?? '') ?>">
+          <button class="btn btn-primary" type="submit">
+            <i class="bi bi-search"></i> Search
+          </button>
+        </div>
+        <?php if (!empty($sellersSearch)): ?>
+          <a href="<?= base_url('/admin/users') ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Clear
+          </a>
+        <?php endif; ?>
+      </form>
+      <?php if (!empty($sellersSearch)): ?>
+        <div class="mt-2 text-white small">
+          <i class="bi bi-info-circle"></i> Sellers results for: "<strong class="text-warning"><?= esc($sellersSearch) ?></strong>"
+        </div>
+      <?php endif; ?>
+    </div>
+  </div>
+
+  <!-- SELLERS SECTION -->
+  <h5 class="text-white mt-4">
     <i class="bi bi-briefcase-fill"></i> Sellers 
-    <span class="badge bg-warning ms-2" id="sellers-count-badge"><?= count($sellers ?? []) ?></span>
+    <span class="badge bg-warning ms-2" id="sellers-count-badge"><?= $sellersPager->total ?? 0 ?></span>
   </h5>
   <div class="table-responsive app-table-wrap">
     <table class="table table-dark table-striped align-middle">
@@ -117,6 +239,37 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Sellers Pagination -->
+  <?php if (isset($sellersPager) && $sellersPager->lastPage > 1): ?>
+  <div class="d-flex justify-content-center mt-3">
+      <nav aria-label="Sellers pagination">
+          <ul class="pagination">
+              <?php if ($sellersPager->currentPage > 1): ?>
+                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage ?? 1 ?>&sellers_page=<?= $sellersPager->currentPage - 1 ?>">&laquo; Prev</a></li>
+              <?php else: ?>
+                  <li class="page-item disabled"><span class="page-link">&laquo; Prev</span></li>
+              <?php endif; ?>
+
+              <?php for ($i = 1; $i <= $sellersPager->lastPage; $i++): ?>
+                  <li class="page-item <?= $i == $sellersPager->currentPage ? 'active' : '' ?>">
+                      <a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage ?? 1 ?>&sellers_page=<?= $i ?>"><?= $i ?></a>
+                  </li>
+              <?php endfor; ?>
+
+              <?php if ($sellersPager->currentPage < $sellersPager->lastPage): ?>
+                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage ?? 1 ?>&sellers_page=<?= $sellersPager->currentPage + 1 ?>">Next &raquo;</a></li>
+              <?php else: ?>
+                  <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
+              <?php endif; ?>
+          </ul>
+      </nav>
+  </div>
+  <div class="text-center text-white small mb-3">
+      Showing <strong><?= $sellersPager->firstItem ?></strong> to <strong><?= $sellersPager->lastItem ?></strong> of <strong><?= $sellersPager->total ?></strong> sellers
+  </div>
+  <?php endif; ?>
+
 </div>
 
 <!-- SOCKET.IO -->
@@ -162,7 +315,6 @@ function showRealtimeAlert(message, type = 'success') {
     
     alertArea.insertAdjacentHTML('beforeend', alertHTML);
     
-    // Auto-dismiss after 5 seconds
     setTimeout(() => {
         const alerts = alertArea.querySelectorAll('.alert');
         if (alerts.length) {
@@ -173,62 +325,6 @@ function showRealtimeAlert(message, type = 'success') {
             }, 300);
         }
     }, 5000);
-}
-
-// Helper function to add user to table
-function addUserToTable(user) {
-    const rowHTML = `
-        <tr data-user-id="${user.id}" data-user-role="${user.role}" class="user-row new-user-row">
-            <td>${escapeHtml(user.id)}</td>
-            <td><i class="bi bi-person-circle"></i> ${escapeHtml(user.name)}</td>
-            <td>${escapeHtml(user.email)}</td>
-            <td>${escapeHtml(user.contact || 'N/A')}</td>
-            <td style="max-width:320px;">${escapeHtml(user.bio || 'N/A')}</td>
-            <td><small>${formatDate(user.created_at)}</small></td>
-        </tr>
-    `;
-    
-    if (user.role === 'buyer') {
-        const buyersTable = document.getElementById('buyers-table-body');
-        if (buyersTable) {
-            buyersTable.insertAdjacentHTML('afterbegin', rowHTML);
-            
-            // Update counters
-            const buyersCount = document.getElementById('buyers-count-badge');
-            const totalBuyers = document.getElementById('total-buyers');
-            if (buyersCount) {
-                let current = parseInt(buyersCount.innerText) || 0;
-                buyersCount.innerText = current + 1;
-            }
-            if (totalBuyers) {
-                let current = parseInt(totalBuyers.innerText) || 0;
-                totalBuyers.innerText = current + 1;
-            }
-        }
-    } else if (user.role === 'seller') {
-        const sellersTable = document.getElementById('sellers-table-body');
-        if (sellersTable) {
-            sellersTable.insertAdjacentHTML('afterbegin', rowHTML);
-            
-            // Update counters
-            const sellersCount = document.getElementById('sellers-count-badge');
-            const totalSellers = document.getElementById('total-sellers');
-            if (sellersCount) {
-                let current = parseInt(sellersCount.innerText) || 0;
-                sellersCount.innerText = current + 1;
-            }
-            if (totalSellers) {
-                let current = parseInt(totalSellers.innerText) || 0;
-                totalSellers.innerText = current + 1;
-            }
-        }
-    }
-    
-    // Scroll to the new user
-    const newRow = document.querySelector(`tr[data-user-id="${user.id}"]`);
-    if (newRow) {
-        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
 }
 
 // Connect to WebSocket server
@@ -242,86 +338,33 @@ const socket = io('http://localhost:3000', {
 socket.on('connect', () => {
     console.log('✅ Admin users page connected to websocket server');
     showRealtimeAlert('Connected to real-time updates', 'info');
-    
-    // Register as admin to receive notifications
     socket.emit('register', 'admin');
 });
 
 socket.on('disconnect', () => {
     console.log('❌ Disconnected from websocket server');
-    showRealtimeAlert('Disconnected from real-time updates. Page will still work normally.', 'warning');
+    showRealtimeAlert('Disconnected from real-time updates', 'warning');
 });
 
 socket.on('connect_error', (error) => {
     console.error('Connection error:', error);
-    showRealtimeAlert('Unable to connect to real-time updates. Check if server is running.', 'danger');
+    showRealtimeAlert('Unable to connect to real-time updates', 'danger');
 });
 
 // Listen for new user registrations
 socket.on('new-user', function(user) {
     console.log('👤 New user registered:', user);
     
-    // Check if user already exists in the table
     const existingUser = document.querySelector(`tr[data-user-id="${user.id}"]`);
     if (existingUser) {
-        console.log('User already exists in table, skipping:', user.id);
+        console.log('User already exists, skipping');
         return;
     }
     
-    // Add user to the appropriate table
-    addUserToTable(user);
-    
-    // Show notification
-    const message = `
-        <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-${user.role === 'buyer' ? 'person-badge' : 'briefcase'} fs-4"></i>
-            <div>
-                <strong>${escapeHtml(user.name)}</strong><br>
-                <small>${user.role.toUpperCase()} just registered!</small><br>
-                <small class="text-muted">${escapeHtml(user.email)}</small>
-            </div>
-        </div>
-    `;
-    showRealtimeAlert(message, 'success');
+    // For pagination, we need to reload to show the user in correct page
+    showRealtimeAlert(`New ${user.role.toUpperCase()} registered: ${escapeHtml(user.name)}`, 'success');
+    setTimeout(() => location.reload(), 2000);
 });
-
-// Optional: Listen for user deletions or updates (if needed)
-socket.on('user-updated', function(user) {
-    console.log('✏️ User updated:', user);
-    
-    const userRow = document.querySelector(`tr[data-user-id="${user.id}"]`);
-    if (userRow) {
-        // Update user information
-        const cells = userRow.cells;
-        if (cells[1]) cells[1].innerHTML = `<i class="bi bi-person-circle"></i> ${escapeHtml(user.name)}`;
-        if (cells[2]) cells[2].innerText = escapeHtml(user.email);
-        if (cells[3]) cells[3].innerText = escapeHtml(user.contact || 'N/A');
-        if (cells[4]) cells[4].innerHTML = escapeHtml(user.bio || 'N/A');
-        
-        // Highlight the updated row
-        userRow.classList.add('new-user-row');
-        setTimeout(() => {
-            userRow.classList.remove('new-user-row');
-        }, 2000);
-        
-        showRealtimeAlert(`User ${escapeHtml(user.name)} information updated`, 'info');
-    }
-});
-
-// Optional: Manual refresh button (add if needed)
-function refreshUsers() {
-    showRealtimeAlert('Refreshing user list...', 'info');
-    setTimeout(() => {
-        location.reload();
-    }, 500);
-}
-
-// Add refresh button to the page (optional)
-const refreshButton = document.createElement('button');
-refreshButton.innerHTML = '<i class="bi bi-arrow-repeat"></i> Refresh';
-refreshButton.className = 'btn btn-outline-primary btn-sm ms-3';
-refreshButton.onclick = refreshUsers;
-document.querySelector('.d-flex.justify-content-between.align-items-center.mb-3').appendChild(refreshButton);
 
 console.log('Admin users page ready - listening for new user registrations');
 </script>

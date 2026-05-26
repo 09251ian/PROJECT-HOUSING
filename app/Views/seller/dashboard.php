@@ -63,7 +63,7 @@ $user = $user ?? session()->get('user') ?? [];
       <div class="section-title text-white fs-4 mb-0">
         <i class="bi bi-speedometer2 me-2"></i>Seller Dashboard
       </div>
-      <div class="text-muted small">Manage listings, offers, and chats.</div>
+      <div class="text-white small">Manage listings, offers, and chats.</div>
     </div>
     <div class="d-flex gap-2">
       <a href="<?= base_url('/seller/archived') ?>" class="btn btn-outline-light btn-sm">
@@ -78,7 +78,7 @@ $user = $user ?? session()->get('user') ?? [];
         <div class="d-flex align-items-center justify-content-between mb-3">
           <div>
             <div class="text-primary fw-bold"><i class="bi bi-plus-circle me-2"></i>Add New Property</div>
-            <div class="text-muted small">Create a listing with a clear description and price.</div>
+            <div class="text-white small">Create a listing with a clear description and price.</div>
           </div>
         </div>
 
@@ -117,7 +117,38 @@ $user = $user ?? session()->get('user') ?? [];
       <div class="d-flex align-items-end justify-content-between mb-3">
         <div>
           <div class="section-title text-primary fs-4">Your Properties</div>
-          <div class="text-muted small">Keep track of offers and chats per listing.</div>
+          <div class="text-white small">Keep track of offers and chats per listing.</div>
+        </div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <form method="get" action="<?= base_url('/seller/dashboard') ?>" class="d-flex gap-2">
+            <div class="input-group">
+              <span class="input-group-text bg-dark text-secondary border-secondary">
+                <i class="bi bi-search"></i>
+              </span>
+              <input type="text" 
+                    name="search" 
+                    class="form-control bg-dark text-white border-secondary" 
+                    placeholder="Search your properties by title, location, or description..." 
+                    value="<?= esc($search ?? '') ?>">
+              <button class="btn btn-primary" type="submit">
+                <i class="bi bi-search"></i> Search
+              </button>
+            </div>
+            <?php if (!empty($search)): ?>
+              <a href="<?= base_url('/seller/dashboard') ?>" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> Clear
+              </a>
+            <?php endif; ?>
+          </form>
+          <?php if (!empty($search)): ?>
+            <div class="mt-2 text-white small">
+              <i class="bi bi-info-circle"></i> Showing results for: "<strong class="text-warning"><?= esc($search) ?></strong>"
+            </div>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -244,7 +275,7 @@ $user = $user ?? session()->get('user') ?? [];
           <?php endforeach; ?>
         </div>
       <?php else: ?>
-        <div class="text-muted">You haven't added any properties yet.</div>
+        <div class="text-white">You haven't added any properties yet.</div>
       <?php endif; ?>
 
       <!-- PAGINATION AT THE BOTTOM -->
@@ -255,7 +286,7 @@ $user = $user ?? session()->get('user') ?? [];
                   <!-- Previous Button -->
                   <?php if ($pager->currentPage > 1): ?>
                       <li class="page-item">
-                          <a class="page-link" href="?page=<?= $pager->currentPage - 1 ?>" aria-label="Previous">
+                          <a class="page-link" href="?page=<?= $pager->currentPage - 1 ?>&search=<?= urlencode($search ?? '') ?>" aria-label="Previous">
                               <span aria-hidden="true">&laquo; Prev</span>
                           </a>
                       </li>
@@ -268,7 +299,7 @@ $user = $user ?? session()->get('user') ?? [];
                   <!-- Page Numbers -->
                   <?php for ($i = 1; $i <= $pager->lastPage; $i++): ?>
                       <li class="page-item <?= $i == $pager->currentPage ? 'active' : '' ?>">
-                          <a class="page-link" href="?page=<?= $i ?>">
+                          <a class="page-link" href="?page=<?= $i ?>&search=<?= urlencode($search ?? '') ?>">
                               <?= $i ?>
                           </a>
                       </li>
@@ -277,7 +308,7 @@ $user = $user ?? session()->get('user') ?? [];
                   <!-- Next Button -->
                   <?php if ($pager->currentPage < $pager->lastPage): ?>
                       <li class="page-item">
-                          <a class="page-link" href="?page=<?= $pager->currentPage + 1 ?>" aria-label="Next">
+                          <a class="page-link" href="?page=<?= $pager->currentPage + 1 ?>&search=<?= urlencode($search ?? '') ?>" aria-label="Next">
                               <span aria-hidden="true">Next &raquo;</span>
                           </a>
                       </li>

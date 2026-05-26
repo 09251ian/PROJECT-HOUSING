@@ -60,6 +60,39 @@
       transition: transform 0.3s ease;
     }
   </style>
+
+  <style>
+  /* Pagination Styles */
+  .pagination {
+      margin: 0;
+  }
+
+  .pagination .page-link {
+      background-color: #16213e;
+      border-color: #0f3460;
+      color: white;
+      padding: 8px 16px;
+      font-size: 14px;
+  }
+
+  .pagination .page-link:hover {
+      background-color: #0f3460;
+      color: white;
+      border-color: #e94560;
+  }
+
+  .pagination .page-item.active .page-link {
+      background-color: #e94560;
+      border-color: #e94560;
+      color: white;
+  }
+
+  .pagination .page-item.disabled .page-link {
+      background-color: #16213e;
+      color: #6c757d;
+      border-color: #0f3460;
+  }
+  </style>
 </head>
 <body class="app-dark">
 
@@ -84,11 +117,42 @@
       <h3 class="text-white mb-0">
         <i class="bi bi-building"></i> Properties Management
       </h3>
-      <p class="text-muted small mt-2">Real-time property updates</p>
+      <p class="text-white small mt-2">Real-time property updates</p>
     </div>
     <a href="<?= base_url('/admin/add_property') ?>" class="btn btn-success btn-sm">
       <i class="bi bi-plus-square me-1"></i>Add Property
     </a>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="row mb-4">
+    <div class="col-md-5">
+      <form method="get" action="<?= base_url('/admin/properties') ?>" class="d-flex gap-2">
+        <div class="input-group">
+          <span class="input-group-text bg-dark text-secondary border-secondary">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" 
+                 name="search" 
+                 class="form-control bg-dark text-white border-secondary" 
+                 placeholder="Search by title, location, or seller..." 
+                 value="<?= esc($search ?? '') ?>">
+          <button class="btn btn-primary" type="submit">
+            <i class="bi bi-search"></i> Search
+          </button>
+        </div>
+        <?php if (!empty($search)): ?>
+          <a href="<?= base_url('/admin/properties') ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Clear
+          </a>
+        <?php endif; ?>
+      </form>
+      <?php if (!empty($search)): ?>
+        <div class="mt-2 text-white-50 small">
+          <i class="bi bi-info-circle"></i> Showing results for: "<strong class="text-warning"><?= esc($search) ?></strong>"
+        </div>
+      <?php endif; ?>
+    </div>
   </div>
 
   <div class="table-responsive app-table-wrap">
@@ -131,6 +195,59 @@
       </tbody>
     </table>
   </div>
+
+    </table>
+  </div>
+  
+  <!-- PAGINATION AT THE BOTTOM -->
+  <?php if (isset($pager) && $pager->lastPage > 1): ?>
+  <div class="d-flex justify-content-center mt-4">
+      <nav aria-label="Page navigation">
+          <ul class="pagination">
+              <!-- Previous Button -->
+              <?php if ($pager->currentPage > 1): ?>
+                  <li class="page-item">
+                      <a class="page-link" href="?page=<?= $pager->currentPage - 1 ?>" aria-label="Previous">
+                          <span aria-hidden="true">&laquo; Prev</span>
+                      </a>
+                  </li>
+              <?php else: ?>
+                  <li class="page-item disabled">
+                      <span class="page-link">&laquo; Prev</span>
+                  </li>
+              <?php endif; ?>
+
+              <!-- Page Numbers -->
+              <?php for ($i = 1; $i <= $pager->lastPage; $i++): ?>
+                  <li class="page-item <?= $i == $pager->currentPage ? 'active' : '' ?>">
+                      <a class="page-link" href="?page=<?= $i ?>">
+                          <?= $i ?>
+                      </a>
+                  </li>
+              <?php endfor; ?>
+
+              <!-- Next Button -->
+              <?php if ($pager->currentPage < $pager->lastPage): ?>
+                  <li class="page-item">
+                      <a class="page-link" href="?page=<?= $pager->currentPage + 1 ?>" aria-label="Next">
+                          <span aria-hidden="true">Next &raquo;</span>
+                      </a>
+                  </li>
+              <?php else: ?>
+                  <li class="page-item disabled">
+                      <span class="page-link">Next &raquo;</span>
+                  </li>
+              <?php endif; ?>
+          </ul>
+      </nav>
+  </div>
+
+  <!-- Showing results info -->
+  <div class="text-center text-white small mt-2">
+      Showing <strong><?= $pager->firstItem ?></strong> to <strong><?= $pager->lastItem ?></strong> 
+      of <strong><?= $pager->total ?></strong> properties
+  </div>
+  <?php endif; ?>
 </div>
 
 <!-- Delete Confirmation Modal -->

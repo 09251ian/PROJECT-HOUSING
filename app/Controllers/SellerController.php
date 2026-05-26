@@ -74,14 +74,27 @@ class SellerController extends BaseController
         
         // Get current page from URL, default to 1
         $currentPage = (int) ($this->request->getGet('page') ?? 1);
-        $perPage = 10; // 10 properties per page
+        $perPage = 10;
+        
+        // Get search parameter
+        $search = $this->request->getGet('search');
+        $search = trim($search);
         
         // Build query
         $query = $propertyModel
             ->where('seller_id', $sellerId)
             ->where('is_archived', 0);
         
-        // Get total count for pagination
+        // Apply search filter if provided
+        if (!empty($search)) {
+            $query->groupStart()
+                ->like('title', $search)
+                ->orLike('location', $search)
+                ->orLike('description', $search)
+                ->groupEnd();
+        }
+        
+        // Get total count
         $total = $query->countAllResults(false);
         
         // Get paginated results
@@ -101,7 +114,7 @@ class SellerController extends BaseController
             'lastItem' => min($currentPage * $perPage, $total)
         ];
         
-        // Get offers data for properties (your existing code)
+        // Get offers data for properties
         $offerModel = new OfferModel();
         $offersData = [];
         foreach ($properties as $property) {
@@ -113,7 +126,7 @@ class SellerController extends BaseController
                 ->findAll();
         }
         
-        // Get chats data for each property (your existing code)
+        // Get chats data for each property
         $messageModel = new MessageModel();
         $chatsData = [];
         foreach ($properties as $property) {
@@ -133,7 +146,8 @@ class SellerController extends BaseController
             'properties' => $properties,
             'offersData' => $offersData,
             'chatsData' => $chatsData,
-            'pager' => $pager
+            'pager' => $pager,
+            'search' => $search
         ]);
     }
 

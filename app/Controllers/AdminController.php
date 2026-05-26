@@ -81,13 +81,82 @@ class AdminController extends BaseController
     {
         $this->checkRoleOrRedirect('admin');
         $userModel = new UserModel();
-
-        $buyers = $userModel->where('role', 'buyer')->orderBy('id', 'DESC')->findAll();
-        $sellers = $userModel->where('role', 'seller')->orderBy('id', 'DESC')->findAll();
+        
+        // Get search parameters for each table
+        $buyersSearch = $this->request->getGet('buyers_search');
+        $buyersSearch = trim($buyersSearch);
+        $sellersSearch = $this->request->getGet('sellers_search');
+        $sellersSearch = trim($sellersSearch);
+        
+        // Buyers pagination
+        $buyersCurrentPage = (int) ($this->request->getGet('buyers_page') ?? 1);
+        $buyersPerPage = 10;
+        
+        $buyersQuery = $userModel->where('role', 'buyer');
+        
+        // Apply search filter to buyers
+        if (!empty($buyersSearch)) {
+            $buyersQuery->groupStart()
+                ->like('name', $buyersSearch)
+                ->orLike('email', $buyersSearch)
+                ->orLike('contact', $buyersSearch)
+                ->groupEnd();
+        }
+        
+        $buyersTotal = $buyersQuery->countAllResults(false);
+        $buyers = $buyersQuery->orderBy('id', 'DESC')
+                            ->limit($buyersPerPage, ($buyersCurrentPage - 1) * $buyersPerPage)
+                            ->get()
+                            ->getResultArray();
+        
+        $buyersLastPage = ceil($buyersTotal / $buyersPerPage);
+        $buyersPager = (object) [
+            'currentPage' => $buyersCurrentPage,
+            'lastPage' => $buyersLastPage,
+            'total' => $buyersTotal,
+            'perPage' => $buyersPerPage,
+            'firstItem' => $buyersTotal > 0 ? (($buyersCurrentPage - 1) * $buyersPerPage) + 1 : 0,
+            'lastItem' => min($buyersCurrentPage * $buyersPerPage, $buyersTotal)
+        ];
+        
+        // Sellers pagination
+        $sellersCurrentPage = (int) ($this->request->getGet('sellers_page') ?? 1);
+        $sellersPerPage = 10;
+        
+        $sellersQuery = $userModel->where('role', 'seller');
+        
+        // Apply search filter to sellers
+        if (!empty($sellersSearch)) {
+            $sellersQuery->groupStart()
+                ->like('name', $sellersSearch)
+                ->orLike('email', $sellersSearch)
+                ->orLike('contact', $sellersSearch)
+                ->groupEnd();
+        }
+        
+        $sellersTotal = $sellersQuery->countAllResults(false);
+        $sellers = $sellersQuery->orderBy('id', 'DESC')
+                                ->limit($sellersPerPage, ($sellersCurrentPage - 1) * $sellersPerPage)
+                                ->get()
+                                ->getResultArray();
+        
+        $sellersLastPage = ceil($sellersTotal / $sellersPerPage);
+        $sellersPager = (object) [
+            'currentPage' => $sellersCurrentPage,
+            'lastPage' => $sellersLastPage,
+            'total' => $sellersTotal,
+            'perPage' => $sellersPerPage,
+            'firstItem' => $sellersTotal > 0 ? (($sellersCurrentPage - 1) * $sellersPerPage) + 1 : 0,
+            'lastItem' => min($sellersCurrentPage * $sellersPerPage, $sellersTotal)
+        ];
 
         return view('admin/users', [
             'buyers' => $buyers,
             'sellers' => $sellers,
+            'buyersPager' => $buyersPager,
+            'sellersPager' => $sellersPager,
+            'buyersSearch' => $buyersSearch,
+            'sellersSearch' => $sellersSearch
         ]);
     }
 
@@ -95,14 +164,53 @@ class AdminController extends BaseController
     {
         $this->checkRoleOrRedirect('admin');
         $propertyModel = new PropertyModel();
-
-        $properties = $propertyModel->select('properties.*, users.name as seller_name')
-            ->join('users', 'users.id = properties.seller_id')
-            ->orderBy('properties.id', 'DESC')
-            ->findAll();
+        
+        // Get current page from URL, default to 1
+        $currentPage = (int) ($this->request->getGet('page') ?? 1);
+        $perPage = 10;
+        
+        // Get search parameter
+        $search = $this->request->getGet('search');
+        $search = trim($search);
+        
+        // Build query
+        $query = $propertyModel->select('properties.*, users.name as seller_name')
+            ->join('users', 'users.id = properties.seller_id');
+        
+        // Apply search filter if provided
+        if (!empty($search)) {
+            $query->groupStart()
+                ->like('properties.title', $search)
+                ->orLike('properties.location', $search)
+                ->orLike('properties.description', $search)
+                ->orLike('users.name', $search)
+                ->groupEnd();
+        }
+        
+        // Get total count
+        $total = $query->countAllResults(false);
+        
+        // Get paginated results
+        $properties = $query->orderBy('properties.id', 'DESC')
+                            ->limit($perPage, ($currentPage - 1) * $perPage)
+                            ->get()
+                            ->getResultArray();
+        
+        // Calculate pagination data
+        $lastPage = ceil($total / $perPage);
+        $pager = (object) [
+            'currentPage' => $currentPage,
+            'lastPage' => $lastPage,
+            'total' => $total,
+            'perPage' => $perPage,
+            'firstItem' => $total > 0 ? (($currentPage - 1) * $perPage) + 1 : 0,
+            'lastItem' => min($currentPage * $perPage, $total)
+        ];
 
         return view('admin/properties', [
             'properties' => $properties,
+            'pager' => $pager,
+            'search' => $search
         ]);
     }
 
@@ -110,15 +218,54 @@ class AdminController extends BaseController
     {
         $this->checkRoleOrRedirect('admin');
         $offerModel = new OfferModel();
-        $offers = $offerModel
+        
+        // Get current page from URL, default to 1
+        $currentPage = (int) ($this->request->getGet('page') ?? 1);
+        $perPage = 10;
+        
+        // Get search parameter
+        $search = $this->request->getGet('search');
+        $search = trim($search);
+        
+        // Build query
+        $query = $offerModel
             ->select('offers.*, buyers.name as buyer_name, properties.title as property_title')
             ->join('users as buyers', 'buyers.id = offers.buyer_id')
-            ->join('properties', 'properties.id = offers.property_id')
-            ->orderBy('offers.id', 'DESC')
-            ->findAll();
+            ->join('properties', 'properties.id = offers.property_id');
+        
+        // Apply search filter if provided
+        if (!empty($search)) {
+            $query->groupStart()
+                ->like('properties.title', $search)
+                ->orLike('buyers.name', $search)
+                ->orLike('offers.amount', $search)
+                ->groupEnd();
+        }
+        
+        // Get total count
+        $total = $query->countAllResults(false);
+        
+        // Get paginated results
+        $offers = $query->orderBy('offers.id', 'DESC')
+                        ->limit($perPage, ($currentPage - 1) * $perPage)
+                        ->get()
+                        ->getResultArray();
+        
+        // Calculate pagination data
+        $lastPage = ceil($total / $perPage);
+        $pager = (object) [
+            'currentPage' => $currentPage,
+            'lastPage' => $lastPage,
+            'total' => $total,
+            'perPage' => $perPage,
+            'firstItem' => $total > 0 ? (($currentPage - 1) * $perPage) + 1 : 0,
+            'lastItem' => min($currentPage * $perPage, $total)
+        ];
 
         return view('admin/offers', [
             'offers' => $offers,
+            'pager' => $pager,
+            'search' => $search
         ]);
     }
 
@@ -126,18 +273,78 @@ class AdminController extends BaseController
     {
         $this->checkRoleOrRedirect('admin');
         $paymentModel = new PaymentModel();
-
-        $payments = $paymentModel
-            ->select('payments.*, buyers.name as buyer_name, sellers.name as seller_name, properties.title as property_title')
+        
+        // Get current page from URL, default to 1
+        $currentPage = (int) ($this->request->getGet('page') ?? 1);
+        $perPage = 10;
+        
+        // Get search parameter
+        $search = $this->request->getGet('search');
+        $search = trim($search);
+        
+        // Build query - specify table name for amount to avoid ambiguity
+        $query = $paymentModel
+            ->select('payments.*, buyers.name as buyer_name, sellers.name as seller_name, properties.title as property_title, payments.amount as payment_amount')
             ->join('offers', 'offers.id = payments.offer_id', 'left')
             ->join('users as buyers', 'buyers.id = payments.buyer_id')
             ->join('users as sellers', 'sellers.id = payments.seller_id')
-            ->join('properties', 'properties.id = payments.property_id')
-            ->orderBy('payments.id', 'DESC')
-            ->findAll();
+            ->join('properties', 'properties.id = payments.property_id');
+        
+        // Apply search filter if provided
+        if (!empty($search)) {
+            $query->groupStart()
+                ->like('properties.title', $search)
+                ->orLike('buyers.name', $search)
+                ->orLike('sellers.name', $search)
+                ->orLike('payments.amount', $search)  // Specify payments.amount
+                ->orLike('payments.status', $search)
+                ->groupEnd();
+        }
+        
+        // Get total count
+        $total = $query->countAllResults(false);
+        
+        // Get paginated results
+        $payments = $query->orderBy('payments.id', 'DESC')
+                        ->limit($perPage, ($currentPage - 1) * $perPage)
+                        ->get()
+                        ->getResultArray();
+        
+        // Calculate total amount for all payments (without pagination)
+        $totalAmountQuery = $paymentModel
+            ->select('SUM(payments.amount) as total')  // Specify payments.amount
+            ->join('offers', 'offers.id = payments.offer_id', 'left')
+            ->join('users as buyers', 'buyers.id = payments.buyer_id')
+            ->join('users as sellers', 'sellers.id = payments.seller_id')
+            ->join('properties', 'properties.id = payments.property_id');
+        
+        if (!empty($search)) {
+            $totalAmountQuery->groupStart()
+                ->like('properties.title', $search)
+                ->orLike('buyers.name', $search)
+                ->orLike('sellers.name', $search)
+                ->groupEnd();
+        }
+        
+        $totalAmountResult = $totalAmountQuery->get()->getRow();
+        $totalAmount = $totalAmountResult->total ?? 0;
+        
+        // Calculate pagination data
+        $lastPage = ceil($total / $perPage);
+        $pager = (object) [
+            'currentPage' => $currentPage,
+            'lastPage' => $lastPage,
+            'total' => $total,
+            'totalAmount' => $totalAmount,
+            'perPage' => $perPage,
+            'firstItem' => $total > 0 ? (($currentPage - 1) * $perPage) + 1 : 0,
+            'lastItem' => min($currentPage * $perPage, $total)
+        ];
 
         return view('admin/payments', [
             'payments' => $payments,
+            'pager' => $pager,
+            'search' => $search
         ]);
     }
 
