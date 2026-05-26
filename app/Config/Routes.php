@@ -49,4 +49,10 @@ $routes->post('/update-property-notify', 'SocketController::updatePropertyNotify
 $routes->post('/delete-property-notify', 'SocketController::deletePropertyNotify');
 $routes->post('/archive-property-notify', 'SocketController::archivePropertyNotify');
 $routes->post('/unarchive-property-notify', 'SocketController::unarchivePropertyNotify');
-$routes->post('/api/save-message', 'MessageController::saveMessage');
+$routes->post('api/save-message', 'MessageController::saveMessage');
+$routes->post('admin/delete-property', 'AdminController::deleteProperty');
+
+// API Routes for real-time property fetching
+$routes->get('/api/property/(:num)', 'SellerController::getProperty/$1');
+$routes->get('/admin/get_counts', 'AdminController::getCounts');
+$routes->post('/admin/update-offer-status', 'AdminController::updateOfferStatus');

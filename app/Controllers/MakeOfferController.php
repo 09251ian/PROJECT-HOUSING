@@ -77,8 +77,10 @@ class MakeOfferController extends BaseController
         $offerData = [
             'property_id' => $propertyId,
             'buyer_id' => $buyerId,
+            'seller_id' => $property['seller_id'],
             'amount' => $amount,
-            'status' => 'pending'
+            'status' => 'pending',
+            'created_at' => date('Y-m-d H:i:s')
         ];
         
         $offerModel->insert($offerData);
@@ -98,7 +100,7 @@ class MakeOfferController extends BaseController
             'status' => 'pending'
         ];
 
-        // Send real-time notification to seller
+        // Send real-time notification to admin and seller
         $this->sendSocketNotification('new-offer', $notificationData);
 
         $session->setFlashdata('success', 'Your offer has been sent. Please wait for seller response.');

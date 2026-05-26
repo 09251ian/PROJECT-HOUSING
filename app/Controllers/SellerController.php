@@ -45,6 +45,26 @@ class SellerController extends BaseController
         return $httpCode === 200;
     }
 
+    // API endpoint to get a single property (for real-time updates)
+    public function getProperty($id = null)
+    {
+        // Allow access without full authentication for public viewing
+        $propertyModel = new PropertyModel();
+        
+        $property = $propertyModel
+            ->select('properties.*, users.name as seller_name')
+            ->join('users', 'users.id = properties.seller_id')
+            ->where('properties.id', $id)
+            ->where('properties.is_archived', 0)
+            ->first();
+        
+        if (!$property) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'Property not found']);
+        }
+        
+        return $this->response->setJSON($property);
+    }
+
     public function dashboard()
     {
         $user = $this->checkRoleOrRedirect('seller');
@@ -389,7 +409,10 @@ class SellerController extends BaseController
         }
 
         $propertyModel->update($propertyId, ['is_archived' => 1]);
+        
+        // Send archive notification
         $this->sendSocketNotification('archive-property', ['id' => $propertyId]);
+        
         session()->setFlashdata('success', 'Property archived successfully!');
         return redirect()->to('/seller/dashboard');
     }
@@ -424,8 +447,12 @@ class SellerController extends BaseController
             'image_path' => $restoredProperty['image_path']
         ];
         
+        // Send unarchive notification
         $this->sendSocketNotification('unarchive-property', ['id' => $propertyId]);
+        
+        // Also send as new property to show it again
         $this->sendSocketNotification('new-property', $notificationData);
+        
         session()->setFlashdata('success', 'Property restored successfully!');
         return redirect()->to('/seller/archived');
     }

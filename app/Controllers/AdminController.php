@@ -17,9 +17,6 @@ class AdminController extends BaseController
         $user = $session->get('user');
 
         if (!$user || ($user['role'] ?? null) !== $role) {
-
-            // Diagnostic: tells us whether we're failing because session user is missing
-            // or because role does not match.
             $session->setFlashdata(
                 'error',
                 'Admin guard blocked: ' .
@@ -33,7 +30,6 @@ class AdminController extends BaseController
 
         return $user;
     }
-
 
     public function dashboard()
     {
@@ -49,6 +45,8 @@ class AdminController extends BaseController
         $propertiesCount = (int) $propertyModel->countAllResults();
         $offersCount = (int) $offerModel->countAllResults();
         $paymentsCount = (int) $paymentModel->countAllResults();
+        
+        $recentUsers = $userModel->orderBy('id', 'DESC')->limit(5)->findAll();
 
         return view('admin/dashboard', [
             'buyersCount' => $buyersCount,
@@ -56,6 +54,26 @@ class AdminController extends BaseController
             'propertiesCount' => $propertiesCount,
             'offersCount' => $offersCount,
             'paymentsCount' => $paymentsCount,
+            'recentUsers' => $recentUsers,
+        ]);
+    }
+
+    public function getCounts()
+    {
+        $this->checkRoleOrRedirect('admin');
+        
+        $userModel = new UserModel();
+        $propertyModel = new PropertyModel();
+        $offerModel = new OfferModel();
+        $paymentModel = new PaymentModel();
+        
+        return $this->response->setJSON([
+            'success' => true,
+            'buyersCount' => (int) $userModel->where('role', 'buyer')->countAllResults(),
+            'sellersCount' => (int) $userModel->where('role', 'seller')->countAllResults(),
+            'propertiesCount' => (int) $propertyModel->countAllResults(),
+            'offersCount' => (int) $offerModel->countAllResults(),
+            'paymentsCount' => (int) $paymentModel->countAllResults(),
         ]);
     }
 
@@ -160,7 +178,10 @@ class AdminController extends BaseController
             }
 
             $propertyModel = new PropertyModel();
-            $propertyModel->insert([
+            
+            $seller = $userModel->find($data['seller_id']);
+            
+            $propertyData = [
                 'seller_id' => (int) $data['seller_id'],
                 'title' => $data['title'],
                 'description' => $data['description'],
@@ -168,9 +189,17 @@ class AdminController extends BaseController
                 'location' => $data['location'],
                 'image_path' => $imagePath,
                 'is_archived' => 0,
-            ]);
+            ];
+            
+            $propertyModel->insert($propertyData);
+            $propertyId = $propertyModel->getInsertID();
+            
+            $propertyData['id'] = $propertyId;
+            $propertyData['seller_name'] = $seller['name'] ?? 'Seller';
+            
+            $this->sendSocketNotification('new-property', $propertyData);
 
-            session()->setFlashdata('success', 'Property added successfully!');
+            session()->setFlashdata('success', 'Property added successfully and broadcasted in real-time!');
             return redirect()->to('/admin/properties');
         }
 
@@ -220,16 +249,29 @@ class AdminController extends BaseController
                 $newName = $img->getRandomName();
                 $img->move(FCPATH . 'uploads', $newName);
                 $data['image_path'] = 'uploads/' . $newName;
+                
+                // Delete old image if exists
+                if (!empty($property['image_path']) && file_exists(FCPATH . $property['image_path'])) {
+                    unlink(FCPATH . $property['image_path']);
+                }
             } else {
                 $data['image_path'] = $property['image_path'] ?? null;
             }
 
-            // Keep archived state as-is
             $data['is_archived'] = (int) ($property['is_archived'] ?? 0);
 
             $propertyModel->update((int) $id, $data);
+            
+            // Get updated property with seller info for broadcast
+            $updatedProperty = $propertyModel->select('properties.*, users.name as seller_name')
+                ->join('users', 'users.id = properties.seller_id')
+                ->where('properties.id', $id)
+                ->first();
+            
+            // Send socket notification for real-time update
+            $this->sendSocketNotification('update-property', $updatedProperty);
 
-            session()->setFlashdata('success', 'Property updated successfully!');
+            session()->setFlashdata('success', 'Property updated successfully and broadcasted in real-time!');
             return redirect()->to('/admin/properties');
         }
 
@@ -238,5 +280,108 @@ class AdminController extends BaseController
             'sellers' => $sellers,
         ]);
     }
-}
 
+    public function deleteProperty()
+    {
+        $this->checkRoleOrRedirect('admin');
+        
+        $propertyId = $this->request->getPost('property_id');
+        
+        if (!$propertyId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Property ID required']);
+        }
+        
+        $propertyModel = new PropertyModel();
+        $property = $propertyModel->find($propertyId);
+        
+        if (!$property) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Property not found']);
+        }
+        
+        if (!empty($property['image_path']) && file_exists(FCPATH . $property['image_path'])) {
+            unlink(FCPATH . $property['image_path']);
+        }
+        
+        $offerModel = new \App\Models\OfferModel();
+        $favoriteModel = new \App\Models\FavoriteModel();
+        $messageModel = new \App\Models\MessageModel();
+        
+        $offerModel->where('property_id', $propertyId)->delete();
+        $favoriteModel->where('property_id', $propertyId)->delete();
+        $messageModel->where('property_id', $propertyId)->delete();
+        
+        $deleted = $propertyModel->delete($propertyId);
+        
+        if ($deleted) {
+            $this->sendSocketNotification('delete-property', ['id' => $propertyId]);
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Property deleted successfully'
+            ]);
+        } else {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to delete property'
+            ]);
+        }
+    }
+
+    public function updateOfferStatus()
+    {
+        $this->checkRoleOrRedirect('admin');
+        
+        $offerId = $this->request->getPost('offer_id');
+        $status = $this->request->getPost('status');
+        
+        if (!$offerId || !$status) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Offer ID and status required']);
+        }
+        
+        $offerModel = new OfferModel();
+        $offer = $offerModel->find($offerId);
+        
+        if (!$offer) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Offer not found']);
+        }
+        
+        $offerModel->update($offerId, ['status' => $status]);
+        
+        $propertyModel = new PropertyModel();
+        $userModel = new UserModel();
+        
+        $property = $propertyModel->find($offer['property_id']);
+        $buyer = $userModel->find($offer['buyer_id']);
+        
+        $offerUpdate = [
+            'id' => $offerId,
+            'property_id' => $offer['property_id'],
+            'property_title' => $property['title'] ?? 'Property',
+            'buyer_id' => $offer['buyer_id'],
+            'buyer_name' => $buyer['name'] ?? 'Buyer',
+            'status' => $status,
+            'amount' => $offer['amount'],
+            'message' => $status === 'accepted' ? 'Offer Accepted!' : 'Offer Rejected'
+        ];
+        
+        $this->sendSocketNotification('offer-status-updated', $offerUpdate);
+        
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Offer status updated successfully'
+        ]);
+    }
+
+    private function sendSocketNotification($endpoint, $data)
+    {
+        try {
+            $client = \Config\Services::curlrequest();
+            $client->post('http://localhost:3000/' . $endpoint, [
+                'json' => $data,
+                'timeout' => 2
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Socket notification failed: ' . $e->getMessage());
+        }
+    }
+}

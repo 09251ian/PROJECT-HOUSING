@@ -39,7 +39,7 @@ io.on('connection', (socket) => {
         console.log(`💬 Private message from ${fromName} (${from}) to user ${to}`);
         console.log(`   Message: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`);
         
-        // Save message to database using built-in http module (no node-fetch needed)
+        // Save message to database using built-in http module
         const postData = JSON.stringify({
             sender_id: parseInt(from),
             receiver_id: parseInt(to),
@@ -132,10 +132,44 @@ io.on('connection', (socket) => {
     });
 });
 
+// ==================== USER REGISTRATION ENDPOINTS ====================
+
+// NEW USER REGISTRATION
+app.post('/new-user', (req, res) => {
+    const user = req.body;
+    console.log('👤 New user registered:', user.name);
+    console.log(`   Email: ${user.email}, Role: ${user.role}`);
+    
+    // Broadcast to all connected admin dashboards
+    io.emit('new-user', user);
+    
+    return res.json({
+        success: true,
+        message: 'New user broadcasted to admin dashboard'
+    });
+});
+
+// GET ONLINE USERS (for admin dashboard)
+app.get('/online-users', (req, res) => {
+    const onlineUsers = Array.from(connectedUsers.keys()).map(id => ({
+        userId: id,
+        status: 'online'
+    }));
+    
+    res.json({
+        success: true,
+        onlineCount: onlineUsers.length,
+        users: onlineUsers
+    });
+});
+
+// ==================== PROPERTY ENDPOINTS ====================
+
 // NEW PROPERTY
 app.post('/new-property', (req, res) => {
     const property = req.body;
     console.log('📦 New property received:', property.title);
+    console.log(`   Seller: ${property.seller_name}, Price: $${property.price}`);
     io.emit('property-added', property);
     return res.json({
         success: true,
@@ -169,7 +203,7 @@ app.post('/delete-property', (req, res) => {
 app.post('/archive-property', (req, res) => {
     const data = req.body;
     console.log('📦 Archive property received:', data.id);
-    io.emit('property-archived', data);
+    io.emit('archive-property', data);
     return res.json({
         success: true,
         message: 'Property archived broadcasted'
@@ -180,12 +214,14 @@ app.post('/archive-property', (req, res) => {
 app.post('/unarchive-property', (req, res) => {
     const data = req.body;
     console.log('🔄 Unarchive property received:', data.id);
-    io.emit('property-unarchived', data);
+    io.emit('unarchive-property', data);
     return res.json({
         success: true,
         message: 'Property unarchived broadcasted'
     });
 });
+
+// ==================== OFFER ENDPOINTS ====================
 
 // NEW OFFER ENDPOINT
 app.post('/new-offer', (req, res) => {
@@ -211,6 +247,8 @@ app.post('/offer-status-updated', (req, res) => {
     });
 });
 
+// ==================== UTILITY ENDPOINTS ====================
+
 // Check if a user is online
 app.post('/check-online-status', (req, res) => {
     const { userId } = req.body;
@@ -218,9 +256,27 @@ app.post('/check-online-status', (req, res) => {
     res.json({ userId, online: isOnline });
 });
 
+// Get server stats
+app.get('/stats', (req, res) => {
+    res.json({
+        success: true,
+        connectedUsers: connectedUsers.size,
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Test endpoint
 app.get('/test', (req, res) => {
-    res.json({ message: 'Server is running!' });
+    res.json({ 
+        message: 'Server is running!',
+        endpoints: {
+            user: '/new-user (POST)',
+            property: '/new-property (POST), /update-property (POST), /delete-property (POST)',
+            offer: '/new-offer (POST), /offer-status-updated (POST)',
+            utility: '/online-users (GET), /stats (GET), /test (GET)'
+        }
+    });
 });
 
 const PORT = 3000;
@@ -228,4 +284,14 @@ const PORT = 3000;
 server.listen(PORT, () => {
     console.log(`🚀 WebSocket server running on port ${PORT}`);
     console.log(`📍 Waiting for connections...`);
+    console.log(`\n📋 Available endpoints:`);
+    console.log(`   POST /new-user - Broadcast new user registration`);
+    console.log(`   POST /new-property - Broadcast new property`);
+    console.log(`   POST /update-property - Broadcast property update`);
+    console.log(`   POST /delete-property - Broadcast property deletion`);
+    console.log(`   POST /new-offer - Broadcast new offer`);
+    console.log(`   POST /offer-status-updated - Broadcast offer status change`);
+    console.log(`   GET /online-users - Get list of online users`);
+    console.log(`   GET /stats - Get server statistics`);
+    console.log(`   GET /test - Test server connectivity`);
 });

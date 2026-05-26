@@ -104,6 +104,23 @@ class Auth extends BaseController
             'password'    => $password,
             'profile_pic' => $profileName
         ]);
+        
+        $userId = $model->getInsertID();
+        
+        // Get the newly created user
+        $newUser = $model->find($userId);
+
+        // Send socket notification for real-time user registration
+        $this->sendSocketNotification('new-user', [
+            'id' => $newUser['id'],
+            'name' => $newUser['name'],
+            'email' => $newUser['email'],
+            'role' => $newUser['role'],
+            'contact' => $newUser['contact'],
+            'bio' => $newUser['bio'],
+            'profile_pic' => $newUser['profile_pic'],
+            'created_at' => $newUser['created_at'] ?? date('Y-m-d H:i:s')
+        ]);
 
         $session->setFlashdata(
             'success',
@@ -117,5 +134,18 @@ class Auth extends BaseController
     {
         session()->destroy();
         return redirect()->to('/');
+    }
+    
+    private function sendSocketNotification($endpoint, $data)
+    {
+        try {
+            $client = \Config\Services::curlrequest();
+            $client->post('http://localhost:3000/' . $endpoint, [
+                'json' => $data,
+                'timeout' => 2
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Socket notification failed: ' . $e->getMessage());
+        }
     }
 }

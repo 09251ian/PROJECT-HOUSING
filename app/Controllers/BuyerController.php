@@ -24,7 +24,7 @@ class BuyerController extends BaseController
         $location = trim($this->request->getGet('location') ?? '');
         $price_range = trim($this->request->getGet('price_range') ?? '');
 
-        // Fetch properties
+        // Fetch properties (only non-archived)
         $propertyModel = new PropertyModel();
         $properties = $propertyModel->getFilteredProperties($search, $location, $price_range);
 
