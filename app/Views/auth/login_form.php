@@ -23,7 +23,7 @@ $user = $user ?? session()->get('user') ?? [];
         <div class="text-center mb-4">
           <div class="text-primary fs-3"><i class="bi bi-box-arrow-in-right"></i></div>
           <h2 class="mt-2 fw-bold">Login</h2>
-          <div class="text-muted small">Welcome back. Let’s find your next home.</div>
+          <div class="text-white small">Welcome back. Let’s find your next home.</div>
         </div>
 
 

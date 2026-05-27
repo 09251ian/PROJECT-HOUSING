@@ -48,6 +48,11 @@
          Payments
       </a>
 
+      <a class="btn btn-outline-light btn-sm" 
+        href="<?= base_url('/admin/audit') ?>">
+        Audit
+      </a>
+
       <a class="btn btn-danger btn-sm"
          href="<?= base_url('/logout') ?>">
          Logout

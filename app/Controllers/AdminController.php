@@ -8,6 +8,7 @@ use App\Models\OfferModel;
 use App\Models\PaymentModel;
 use App\Models\PropertyModel;
 use App\Models\UserModel;
+use App\Models\AuditLogModel;
 
 class AdminController extends BaseController
 {
@@ -82,19 +83,16 @@ class AdminController extends BaseController
         $this->checkRoleOrRedirect('admin');
         $userModel = new UserModel();
         
-        // Get search parameters for each table
         $buyersSearch = $this->request->getGet('buyers_search');
         $buyersSearch = trim($buyersSearch);
         $sellersSearch = $this->request->getGet('sellers_search');
         $sellersSearch = trim($sellersSearch);
         
-        // Buyers pagination
         $buyersCurrentPage = (int) ($this->request->getGet('buyers_page') ?? 1);
         $buyersPerPage = 10;
         
         $buyersQuery = $userModel->where('role', 'buyer');
         
-        // Apply search filter to buyers
         if (!empty($buyersSearch)) {
             $buyersQuery->groupStart()
                 ->like('name', $buyersSearch)
@@ -119,13 +117,11 @@ class AdminController extends BaseController
             'lastItem' => min($buyersCurrentPage * $buyersPerPage, $buyersTotal)
         ];
         
-        // Sellers pagination
         $sellersCurrentPage = (int) ($this->request->getGet('sellers_page') ?? 1);
         $sellersPerPage = 10;
         
         $sellersQuery = $userModel->where('role', 'seller');
         
-        // Apply search filter to sellers
         if (!empty($sellersSearch)) {
             $sellersQuery->groupStart()
                 ->like('name', $sellersSearch)
@@ -165,19 +161,15 @@ class AdminController extends BaseController
         $this->checkRoleOrRedirect('admin');
         $propertyModel = new PropertyModel();
         
-        // Get current page from URL, default to 1
         $currentPage = (int) ($this->request->getGet('page') ?? 1);
         $perPage = 10;
         
-        // Get search parameter
         $search = $this->request->getGet('search');
         $search = trim($search);
         
-        // Build query
         $query = $propertyModel->select('properties.*, users.name as seller_name')
             ->join('users', 'users.id = properties.seller_id');
         
-        // Apply search filter if provided
         if (!empty($search)) {
             $query->groupStart()
                 ->like('properties.title', $search)
@@ -187,16 +179,13 @@ class AdminController extends BaseController
                 ->groupEnd();
         }
         
-        // Get total count
         $total = $query->countAllResults(false);
         
-        // Get paginated results
         $properties = $query->orderBy('properties.id', 'DESC')
                             ->limit($perPage, ($currentPage - 1) * $perPage)
                             ->get()
                             ->getResultArray();
         
-        // Calculate pagination data
         $lastPage = ceil($total / $perPage);
         $pager = (object) [
             'currentPage' => $currentPage,
@@ -219,21 +208,17 @@ class AdminController extends BaseController
         $this->checkRoleOrRedirect('admin');
         $offerModel = new OfferModel();
         
-        // Get current page from URL, default to 1
         $currentPage = (int) ($this->request->getGet('page') ?? 1);
         $perPage = 10;
         
-        // Get search parameter
         $search = $this->request->getGet('search');
         $search = trim($search);
         
-        // Build query
         $query = $offerModel
             ->select('offers.*, buyers.name as buyer_name, properties.title as property_title')
             ->join('users as buyers', 'buyers.id = offers.buyer_id')
             ->join('properties', 'properties.id = offers.property_id');
         
-        // Apply search filter if provided
         if (!empty($search)) {
             $query->groupStart()
                 ->like('properties.title', $search)
@@ -242,16 +227,13 @@ class AdminController extends BaseController
                 ->groupEnd();
         }
         
-        // Get total count
         $total = $query->countAllResults(false);
         
-        // Get paginated results
         $offers = $query->orderBy('offers.id', 'DESC')
                         ->limit($perPage, ($currentPage - 1) * $perPage)
                         ->get()
                         ->getResultArray();
         
-        // Calculate pagination data
         $lastPage = ceil($total / $perPage);
         $pager = (object) [
             'currentPage' => $currentPage,
@@ -274,15 +256,12 @@ class AdminController extends BaseController
         $this->checkRoleOrRedirect('admin');
         $paymentModel = new PaymentModel();
         
-        // Get current page from URL, default to 1
         $currentPage = (int) ($this->request->getGet('page') ?? 1);
         $perPage = 10;
         
-        // Get search parameter
         $search = $this->request->getGet('search');
         $search = trim($search);
         
-        // Build query - specify table name for amount to avoid ambiguity
         $query = $paymentModel
             ->select('payments.*, buyers.name as buyer_name, sellers.name as seller_name, properties.title as property_title, payments.amount as payment_amount')
             ->join('offers', 'offers.id = payments.offer_id', 'left')
@@ -290,29 +269,25 @@ class AdminController extends BaseController
             ->join('users as sellers', 'sellers.id = payments.seller_id')
             ->join('properties', 'properties.id = payments.property_id');
         
-        // Apply search filter if provided
         if (!empty($search)) {
             $query->groupStart()
                 ->like('properties.title', $search)
                 ->orLike('buyers.name', $search)
                 ->orLike('sellers.name', $search)
-                ->orLike('payments.amount', $search)  // Specify payments.amount
+                ->orLike('payments.amount', $search)
                 ->orLike('payments.status', $search)
                 ->groupEnd();
         }
         
-        // Get total count
         $total = $query->countAllResults(false);
         
-        // Get paginated results
         $payments = $query->orderBy('payments.id', 'DESC')
                         ->limit($perPage, ($currentPage - 1) * $perPage)
                         ->get()
                         ->getResultArray();
         
-        // Calculate total amount for all payments (without pagination)
         $totalAmountQuery = $paymentModel
-            ->select('SUM(payments.amount) as total')  // Specify payments.amount
+            ->select('SUM(payments.amount) as total')
             ->join('offers', 'offers.id = payments.offer_id', 'left')
             ->join('users as buyers', 'buyers.id = payments.buyer_id')
             ->join('users as sellers', 'sellers.id = payments.seller_id')
@@ -329,7 +304,6 @@ class AdminController extends BaseController
         $totalAmountResult = $totalAmountQuery->get()->getRow();
         $totalAmount = $totalAmountResult->total ?? 0;
         
-        // Calculate pagination data
         $lastPage = ceil($total / $perPage);
         $pager = (object) [
             'currentPage' => $currentPage,
@@ -348,6 +322,7 @@ class AdminController extends BaseController
         ]);
     }
 
+    // ========== ADD PROPERTY WITH AUDIT LOG ==========
     public function addProperty()
     {
         $this->checkRoleOrRedirect('admin');
@@ -357,11 +332,11 @@ class AdminController extends BaseController
 
         if ($this->request->getMethod() === 'post') {
             $data = [
-                'title' => $this->request->getPost('title', FILTER_SANITIZE_STRING),
-                'description' => $this->request->getPost('description', FILTER_SANITIZE_STRING),
-                'price' => $this->request->getPost('price', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION),
-                'location' => $this->request->getPost('location', FILTER_SANITIZE_STRING),
-                'seller_id' => $this->request->getPost('seller_id', FILTER_SANITIZE_NUMBER_INT),
+                'title' => $this->request->getPost('title'),
+                'description' => $this->request->getPost('description'),
+                'price' => $this->request->getPost('price'),
+                'location' => $this->request->getPost('location'),
+                'seller_id' => $this->request->getPost('seller_id'),
             ];
 
             $rules = [
@@ -404,6 +379,22 @@ class AdminController extends BaseController
             $propertyData['id'] = $propertyId;
             $propertyData['seller_name'] = $seller['name'] ?? 'Seller';
             
+            // ========== AUDIT LOG: CREATE PROPERTY ==========
+            $auditLog = new AuditLogModel();
+            $auditLog->logActivity(
+                'create',
+                'property',
+                $propertyId,
+                [
+                    'title' => $data['title'],
+                    'price' => $data['price'],
+                    'location' => $data['location'],
+                    'seller_id' => $data['seller_id'],
+                    'seller_name' => $seller['name'] ?? 'Unknown'
+                ]
+            );
+            // ========== END AUDIT LOG ==========
+            
             $this->sendSocketNotification('new-property', $propertyData);
 
             session()->setFlashdata('success', 'Property added successfully and broadcasted in real-time!');
@@ -415,6 +406,7 @@ class AdminController extends BaseController
         ]);
     }
 
+    // ========== EDIT PROPERTY WITH AUDIT LOG ==========
     public function editProperty($id = null)
     {
         $this->checkRoleOrRedirect('admin');
@@ -432,11 +424,11 @@ class AdminController extends BaseController
 
         if ($this->request->getMethod() === 'post') {
             $data = [
-                'title' => $this->request->getPost('title', FILTER_SANITIZE_STRING),
-                'description' => $this->request->getPost('description', FILTER_SANITIZE_STRING),
-                'price' => $this->request->getPost('price', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION),
-                'location' => $this->request->getPost('location', FILTER_SANITIZE_STRING),
-                'seller_id' => $this->request->getPost('seller_id', FILTER_SANITIZE_NUMBER_INT),
+                'title' => $this->request->getPost('title'),
+                'description' => $this->request->getPost('description'),
+                'price' => $this->request->getPost('price'),
+                'location' => $this->request->getPost('location'),
+                'seller_id' => $this->request->getPost('seller_id'),
             ];
 
             $rules = [
@@ -457,7 +449,6 @@ class AdminController extends BaseController
                 $img->move(FCPATH . 'uploads', $newName);
                 $data['image_path'] = 'uploads/' . $newName;
                 
-                // Delete old image if exists
                 if (!empty($property['image_path']) && file_exists(FCPATH . $property['image_path'])) {
                     unlink(FCPATH . $property['image_path']);
                 }
@@ -475,7 +466,27 @@ class AdminController extends BaseController
                 ->where('properties.id', $id)
                 ->first();
             
-            // Send socket notification for real-time update
+            // ========== AUDIT LOG: UPDATE PROPERTY ==========
+            $auditLog = new AuditLogModel();
+            $auditLog->logActivity(
+                'update',
+                'property',
+                $id,
+                [
+                    'old' => [
+                        'title' => $property['title'],
+                        'price' => $property['price'],
+                        'location' => $property['location']
+                    ],
+                    'new' => [
+                        'title' => $data['title'],
+                        'price' => $data['price'],
+                        'location' => $data['location']
+                    ]
+                ]
+            );
+            // ========== END AUDIT LOG ==========
+            
             $this->sendSocketNotification('update-property', $updatedProperty);
 
             session()->setFlashdata('success', 'Property updated successfully and broadcasted in real-time!');
@@ -488,6 +499,7 @@ class AdminController extends BaseController
         ]);
     }
 
+    // ========== DELETE PROPERTY WITH AUDIT LOG ==========
     public function deleteProperty()
     {
         $this->checkRoleOrRedirect('admin');
@@ -504,6 +516,21 @@ class AdminController extends BaseController
         if (!$property) {
             return $this->response->setJSON(['success' => false, 'message' => 'Property not found']);
         }
+        
+        // ========== AUDIT LOG: DELETE PROPERTY ==========
+        $auditLog = new AuditLogModel();
+        $auditLog->logActivity(
+            'delete',
+            'property',
+            $propertyId,
+            [
+                'title' => $property['title'],
+                'price' => $property['price'],
+                'location' => $property['location'],
+                'seller_id' => $property['seller_id']
+            ]
+        );
+        // ========== END AUDIT LOG ==========
         
         if (!empty($property['image_path']) && file_exists(FCPATH . $property['image_path'])) {
             unlink(FCPATH . $property['image_path']);
@@ -532,6 +559,92 @@ class AdminController extends BaseController
                 'message' => 'Failed to delete property'
             ]);
         }
+    }
+
+    // ========== ARCHIVE PROPERTY WITH AUDIT LOG ==========
+    public function archiveProperty()
+    {
+        $this->checkRoleOrRedirect('admin');
+        
+        $propertyId = $this->request->getPost('property_id');
+        
+        if (!$propertyId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Property ID required']);
+        }
+        
+        $propertyModel = new PropertyModel();
+        $property = $propertyModel->find($propertyId);
+        
+        if (!$property) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Property not found']);
+        }
+        
+        // ========== AUDIT LOG: ADMIN ARCHIVE PROPERTY ==========
+        $auditLog = new \App\Models\AuditLogModel();
+        $auditLog->logActivity(
+            'archive',
+            'property',
+            $propertyId,
+            [
+                'title' => $property['title'],
+                'price' => $property['price'],
+                'location' => $property['location'],
+                'is_archived' => 1
+            ]
+        );
+        // ========== END AUDIT LOG ==========
+        
+        $propertyModel->update($propertyId, ['is_archived' => 1]);
+        
+        $this->sendSocketNotification('archive-property', ['id' => $propertyId]);
+        
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Property archived successfully'
+        ]);
+    }
+
+    // ========== UNARCHIVE PROPERTY WITH AUDIT LOG ==========
+    public function unarchiveProperty()
+    {
+        $this->checkRoleOrRedirect('admin');
+        
+        $propertyId = $this->request->getPost('property_id');
+        
+        if (!$propertyId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Property ID required']);
+        }
+        
+        $propertyModel = new PropertyModel();
+        $property = $propertyModel->find($propertyId);
+        
+        if (!$property) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Property not found']);
+        }
+        
+        // ========== AUDIT LOG: ADMIN UNARCHIVE PROPERTY ==========
+        $auditLog = new \App\Models\AuditLogModel();
+        $auditLog->logActivity(
+            'unarchive',
+            'property',
+            $propertyId,
+            [
+                'title' => $property['title'],
+                'price' => $property['price'],
+                'location' => $property['location'],
+                'is_archived' => 0
+            ]
+        );
+        // ========== END AUDIT LOG ==========
+        
+        $propertyModel->update($propertyId, ['is_archived' => 0]);
+        
+        $this->sendSocketNotification('unarchive-property', ['id' => $propertyId]);
+        
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Property unarchived successfully'
+        ]);
     }
 
     public function updateOfferStatus()
@@ -576,6 +689,92 @@ class AdminController extends BaseController
         return $this->response->setJSON([
             'success' => true,
             'message' => 'Offer status updated successfully'
+        ]);
+    }
+
+    // ========== AUDIT LOGS VIEW ==========
+    public function audit()
+    {
+        $this->checkRoleOrRedirect('admin');
+
+        $auditModel = new AuditLogModel();
+        
+        // ========== GET SEARCH PARAMETERS ==========
+        $loginSearch = $this->request->getGet('login_search');
+        $loginSearch = trim($loginSearch);
+        $propertySearch = $this->request->getGet('property_search');
+        $propertySearch = trim($propertySearch);
+        
+        // ========== PAGINATION FOR LOGIN/LOGOUT TABLE ==========
+        $loginPage = (int) ($this->request->getGet('login_page') ?? 1);
+        $loginPerPage = 10;
+        
+        $loginBuilder = $auditModel->whereIn('activity_type', ['login', 'logout', 'register']);
+        
+        // Apply search filter for login table
+        if (!empty($loginSearch)) {
+            $loginBuilder->groupStart()
+                ->like('actor_user_id', $loginSearch)
+                ->orLike('actor_role', $loginSearch)
+                ->orLike('activity_type', $loginSearch)
+                ->orLike('metadata', $loginSearch)
+                ->groupEnd();
+        }
+        
+        $loginTotal = $loginBuilder->countAllResults(false);
+        $loginLogs = $loginBuilder->orderBy('created_at', 'DESC')
+                                ->limit($loginPerPage, ($loginPage - 1) * $loginPerPage)
+                                ->findAll();
+        
+        $loginLastPage = ceil($loginTotal / $loginPerPage);
+        $loginPager = (object) [
+            'currentPage' => $loginPage,
+            'lastPage' => $loginLastPage,
+            'total' => $loginTotal,
+            'perPage' => $loginPerPage,
+            'firstItem' => $loginTotal > 0 ? (($loginPage - 1) * $loginPerPage) + 1 : 0,
+            'lastItem' => min($loginPage * $loginPerPage, $loginTotal)
+        ];
+        
+        // ========== PAGINATION FOR PROPERTY CRUD TABLE ==========
+        $propertyPage = (int) ($this->request->getGet('property_page') ?? 1);
+        $propertyPerPage = 10;
+        
+        $propertyBuilder = $auditModel->where('entity_type', 'property')
+                                    ->whereIn('activity_type', ['create', 'update', 'delete', 'archive', 'unarchive']);
+        
+        // Apply search filter for property table
+        if (!empty($propertySearch)) {
+            $propertyBuilder->groupStart()
+                ->like('actor_user_id', $propertySearch)
+                ->orLike('actor_role', $propertySearch)
+                ->orLike('activity_type', $propertySearch)
+                ->orLike('metadata', $propertySearch)
+                ->groupEnd();
+        }
+        
+        $propertyTotal = $propertyBuilder->countAllResults(false);
+        $propertyLogs = $propertyBuilder->orderBy('created_at', 'DESC')
+                                        ->limit($propertyPerPage, ($propertyPage - 1) * $propertyPerPage)
+                                        ->findAll();
+        
+        $propertyLastPage = ceil($propertyTotal / $propertyPerPage);
+        $propertyPager = (object) [
+            'currentPage' => $propertyPage,
+            'lastPage' => $propertyLastPage,
+            'total' => $propertyTotal,
+            'perPage' => $propertyPerPage,
+            'firstItem' => $propertyTotal > 0 ? (($propertyPage - 1) * $propertyPerPage) + 1 : 0,
+            'lastItem' => min($propertyPage * $propertyPerPage, $propertyTotal)
+        ];
+
+        return view('admin/audit', [
+            'loginLogs' => $loginLogs,
+            'loginPager' => $loginPager,
+            'loginSearch' => $loginSearch,
+            'propertyLogs' => $propertyLogs,
+            'propertyPager' => $propertyPager,
+            'propertySearch' => $propertySearch,
         ]);
     }
 

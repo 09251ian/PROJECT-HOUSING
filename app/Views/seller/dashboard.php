@@ -495,6 +495,66 @@ function addPropertyToDashboard(property) {
     }
 }
 
+// ========== LISTEN FOR PROPERTY UPDATES FROM ADMIN ==========
+socket.on('property-updated', function(property) {
+    console.log('✏️ Property update received by seller:', property);
+    console.log('Image path received:', property.image_path);
+    
+    // Check if this property belongs to this seller
+    if (property.seller_id == currentSellerId) {
+        console.log('✅ This property belongs to current seller, updating in dashboard...');
+        
+        const propertyCard = document.querySelector(`.property-card[data-property-id="${property.id}"]`);
+        
+        if (propertyCard) {
+            // Update title
+            const titleElement = propertyCard.querySelector('.property-title');
+            if (titleElement) titleElement.textContent = property.title;
+            
+            // Update price
+            const priceElement = propertyCard.querySelector('.property-price');
+            if (priceElement) priceElement.textContent = `₱${parseFloat(property.price || 0).toLocaleString()}`;
+            
+            // Update location
+            const locationElement = propertyCard.querySelector('.property-location');
+            if (locationElement) locationElement.innerHTML = `<i class="bi bi-geo-alt me-1"></i>${escapeHtml(property.location)}`;
+            
+            // Update description
+            const descElement = propertyCard.querySelector('.property-desc');
+            if (descElement) descElement.textContent = property.description;
+            
+            // ========== UPDATE IMAGE ==========
+            if (property.image_path && property.image_path !== 'null' && property.image_path !== 'uploads/null') {
+                const imgElement = propertyCard.querySelector('.property-media img');
+                if (imgElement) {
+                    let newImagePath = property.image_path;
+                    if (!newImagePath.startsWith('/') && !newImagePath.startsWith('http')) {
+                        newImagePath = '/' + newImagePath;
+                    }
+                    newImagePath = newImagePath + '?t=' + new Date().getTime();
+                    imgElement.src = newImagePath;
+                    console.log('🖼️ Seller: Image updated to:', newImagePath);
+                }
+            }
+            // ========== END IMAGE UPDATE ==========
+            
+            // Highlight the updated card
+            propertyCard.style.transition = 'background-color 0.5s';
+            propertyCard.style.backgroundColor = '#2a5a2a';
+            setTimeout(() => {
+                propertyCard.style.backgroundColor = '';
+            }, 2000);
+            
+            showNotification(`Property "${property.title}" has been updated!`, 'info');
+        } else {
+            console.log('⚠️ Property card not found on current page');
+            showNotification(`Property "${property.title}" was updated. Refresh to see changes.`, 'warning');
+        }
+    } else {
+        console.log('⏭️ Property belongs to another seller, skipping...');
+    }
+});
+
 // Listen for new offers
 socket.on('new-offer', function(data) {
     console.log('💰 New offer received:', data);
@@ -572,6 +632,27 @@ socket.on('new-offer', function(data) {
         }
         
         showNotification(`💰 New offer of ₱${parseFloat(data.amount || 0).toLocaleString()} from ${escapeHtml(data.buyer_name)} on ${escapeHtml(data.property_title)}`, 'info');
+    }
+});
+
+// ========== LISTEN FOR PROPERTY DELETION ==========
+socket.on('property-deleted', function(data) {
+    console.log('🗑️ Property deleted:', data.id);
+    
+    const propertyCard = document.querySelector(`.property-card[data-property-id="${data.id}"]`);
+    if (propertyCard) {
+        propertyCard.style.transition = 'opacity 0.3s';
+        propertyCard.style.opacity = '0';
+        setTimeout(() => {
+            propertyCard.remove();
+            showNotification('A property has been removed', 'danger');
+            
+            // Update pagination count if needed
+            const remainingCards = document.querySelectorAll('.property-card');
+            if (remainingCards.length === 0) {
+                location.reload();
+            }
+        }, 300);
     }
 });
 

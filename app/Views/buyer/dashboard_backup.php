@@ -452,7 +452,8 @@ socket.on('connect_error', (error) => {
 
 // ========== LISTEN FOR PROPERTY UPDATES ==========
 socket.on('property-updated', function(property) {
-    console.log('✏️ Property update received:', property.title);
+    console.log('✏️ Property update received:', property);
+    console.log('Image path received:', property.image_path);
     
     const propertyCard = document.querySelector(`.realtime-property[data-property-id="${property.id}"]`);
     
@@ -473,6 +474,29 @@ socket.on('property-updated', function(property) {
         const descElement = propertyCard.querySelector('.property-description');
         if (descElement) descElement.textContent = property.description;
         
+        // Update seller name
+        const sellerElement = propertyCard.querySelector('.property-seller');
+        if (sellerElement && property.seller_name) {
+            sellerElement.innerHTML = `<small>Seller: ${escapeHtml(property.seller_name)}</small>`;
+        }
+        
+        // ========== UPDATE IMAGE ==========
+        if (property.image_path && property.image_path !== 'null' && property.image_path !== 'uploads/null') {
+            const imgElement = propertyCard.querySelector('.card-img-top');
+            if (imgElement) {
+                // Build the full image path
+                let newImagePath = property.image_path;
+                // Add leading slash if needed
+                if (!newImagePath.startsWith('/') && !newImagePath.startsWith('http')) {
+                    newImagePath = '/' + newImagePath;
+                }
+                // Add timestamp to force refresh and avoid cache
+                newImagePath = newImagePath + '?t=' + new Date().getTime();
+                imgElement.src = newImagePath;
+                console.log('🖼️ Image updated to:', newImagePath);
+            }
+        }
+        
         // Highlight the card
         propertyCard.classList.add('property-highlight');
         setTimeout(() => {
@@ -480,6 +504,8 @@ socket.on('property-updated', function(property) {
         }, 2000);
         
         showNotification(`Property updated: ${property.title}`, 'info');
+    } else {
+        console.log('Property card not found for ID:', property.id);
     }
 });
 

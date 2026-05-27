@@ -6,19 +6,17 @@ use App\Models\PropertyModel;
 use App\Models\OfferModel;
 use App\Models\MessageModel;
 use App\Models\UserModel;
+use App\Models\AuditLogModel;
 
 class SellerController extends BaseController
 {
     protected function checkRoleOrRedirect(string $role)
     {
         $session = session();
-
         $user = $session->get('user');
 
         if (!$user || $user['role'] !== $role) {
-
             redirect()->to('/login')->send();
-
             exit;
         }
 
@@ -48,7 +46,6 @@ class SellerController extends BaseController
     // API endpoint to get a single property (for real-time updates)
     public function getProperty($id = null)
     {
-        // Allow access without full authentication for public viewing
         $propertyModel = new PropertyModel();
         
         $property = $propertyModel
@@ -72,20 +69,16 @@ class SellerController extends BaseController
         
         $propertyModel = new PropertyModel();
         
-        // Get current page from URL, default to 1
         $currentPage = (int) ($this->request->getGet('page') ?? 1);
         $perPage = 10;
         
-        // Get search parameter
         $search = $this->request->getGet('search');
         $search = trim($search);
         
-        // Build query
         $query = $propertyModel
             ->where('seller_id', $sellerId)
             ->where('is_archived', 0);
         
-        // Apply search filter if provided
         if (!empty($search)) {
             $query->groupStart()
                 ->like('title', $search)
@@ -94,16 +87,13 @@ class SellerController extends BaseController
                 ->groupEnd();
         }
         
-        // Get total count
         $total = $query->countAllResults(false);
         
-        // Get paginated results
         $properties = $query->orderBy('id', 'DESC')
                             ->limit($perPage, ($currentPage - 1) * $perPage)
                             ->get()
                             ->getResultArray();
         
-        // Calculate pagination data
         $lastPage = ceil($total / $perPage);
         $pager = (object) [
             'currentPage' => $currentPage,
@@ -114,7 +104,6 @@ class SellerController extends BaseController
             'lastItem' => min($currentPage * $perPage, $total)
         ];
         
-        // Get offers data for properties
         $offerModel = new OfferModel();
         $offersData = [];
         foreach ($properties as $property) {
@@ -126,7 +115,6 @@ class SellerController extends BaseController
                 ->findAll();
         }
         
-        // Get chats data for each property
         $messageModel = new MessageModel();
         $chatsData = [];
         foreach ($properties as $property) {
@@ -167,23 +155,18 @@ class SellerController extends BaseController
         $propertyModel = new PropertyModel();
         $userModel = new UserModel();
         
-        // Get offer details before update
         $offer = $offerModel->find($offerId);
         if (!$offer) {
             session()->setFlashdata('error', 'Offer not found.');
             return redirect()->to('/seller/dashboard');
         }
         
-        // Get property details
         $property = $propertyModel->find($offer['property_id']);
-        
-        // Get buyer details
         $buyer = $userModel->find($offer['buyer_id']);
 
         if ($action === 'accept') {
             $offerModel->update($offerId, ['status' => 'accepted']);
 
-            // Reject all other offers for this property
             $offerModel->where('property_id', $offer['property_id'])
                 ->where('id !=', $offerId)
                 ->set(['status' => 'rejected'])
@@ -191,7 +174,6 @@ class SellerController extends BaseController
 
             session()->setFlashdata('success', 'Offer accepted successfully!');
             
-            // Prepare notification data for buyer
             $notificationData = [
                 'offer_id' => $offerId,
                 'property_id' => $offer['property_id'],
@@ -204,10 +186,8 @@ class SellerController extends BaseController
                 'message' => 'Your offer has been accepted! Congratulations!'
             ];
             
-            // Send notification to buyer
             $this->sendSocketNotification('offer-status-updated', $notificationData);
             
-            // Also notify about rejected offers for other buyers
             $rejectedOffers = $offerModel
                 ->where('property_id', $offer['property_id'])
                 ->where('id !=', $offerId)
@@ -234,7 +214,6 @@ class SellerController extends BaseController
             $offerModel->update($offerId, ['status' => 'rejected']);
             session()->setFlashdata('success', 'Offer rejected successfully!');
             
-            // Prepare notification data for buyer
             $notificationData = [
                 'offer_id' => $offerId,
                 'property_id' => $offer['property_id'],
@@ -247,7 +226,6 @@ class SellerController extends BaseController
                 'message' => 'Your offer has been rejected.'
             ];
             
-            // Send notification to buyer
             $this->sendSocketNotification('offer-status-updated', $notificationData);
 
         } else {
@@ -257,6 +235,7 @@ class SellerController extends BaseController
         return redirect()->to('/seller/dashboard');
     }
 
+    // ========== ADD PROPERTY WITH AUDIT LOG ==========
     public function addProperty()
     {
         $user = $this->checkRoleOrRedirect('seller');
@@ -282,7 +261,6 @@ class SellerController extends BaseController
                 ->with('errors', $this->validator->getErrors());
         }
 
-        // IMAGE UPLOAD
         $imagePath = null;
         $img = $this->request->getFile('image');
 
@@ -292,7 +270,6 @@ class SellerController extends BaseController
             $imagePath = 'uploads/' . $newName;
         }
 
-        // SAVE PROPERTY
         $propertyModel = new PropertyModel();
 
         $propertyData = [
@@ -308,11 +285,24 @@ class SellerController extends BaseController
         $propertyModel->insert($propertyData);
         $propertyId = $propertyModel->getInsertID();
 
-        // REALTIME DATA
+        // ========== AUDIT LOG: SELLER CREATE PROPERTY ==========
+        $auditLog = new AuditLogModel();
+        $auditLog->logActivity(
+            'create',
+            'property',
+            $propertyId,
+            [
+                'title' => $data['title'],
+                'price' => $data['price'],
+                'location' => $data['location'],
+                'source' => 'seller'
+            ]
+        );
+        // ========== END AUDIT LOG ==========
+
         $propertyData['id'] = $propertyId;
         $propertyData['seller_name'] = $user['name'];
 
-        // SEND TO WEBSOCKET SERVER
         $this->sendSocketNotification('new-property', $propertyData);
 
         session()->setFlashdata('success', 'Property added successfully!');
@@ -341,8 +331,25 @@ class SellerController extends BaseController
             'properties' => $properties,
             'pager' => $pager
         ]);
+
+        // ========== AUDIT LOG: SELLER ARCHIVE PROPERTY ==========
+        $auditLog = new AuditLogModel();
+        $auditLog->logActivity(
+            'archive',
+            'property',
+            $propertyId,
+            [
+                'title' => $property['title'],
+                'price' => $property['price'],
+                'location' => $property['location'],
+                'is_archived' => 1,
+                'source' => 'seller'
+            ]
+        );
+        // ========== END AUDIT LOG ==========
     }
 
+    // ========== EDIT PROPERTY WITH AUDIT LOG ==========
     public function editProperty($id = null)
     {
         $user = $this->checkRoleOrRedirect('seller');
@@ -386,7 +393,6 @@ class SellerController extends BaseController
                 $img->move(FCPATH . 'uploads', $newName);
                 $data['image_path'] = 'uploads/' . $newName;
 
-                // Delete old image if exists
                 if (!empty($property['image_path']) && file_exists(FCPATH . $property['image_path'])) {
                     unlink(FCPATH . $property['image_path']);
                 }
@@ -395,6 +401,29 @@ class SellerController extends BaseController
             }
 
             $propertyModel->update($id, $data);
+            
+            // ========== AUDIT LOG: SELLER UPDATE PROPERTY ==========
+            $auditLog = new AuditLogModel();
+            $auditLog->logActivity(
+                'update',
+                'property',
+                $id,
+                [
+                    'old' => [
+                        'title' => $property['title'],
+                        'price' => $property['price'],
+                        'location' => $property['location']
+                    ],
+                    'new' => [
+                        'title' => $data['title'],
+                        'price' => $data['price'],
+                        'location' => $data['location']
+                    ],
+                    'source' => 'seller'
+                ]
+            );
+            // ========== END AUDIT LOG ==========
+            
             $updatedProperty = $propertyModel->find($id);
             
             $notificationData = [
@@ -419,6 +448,7 @@ class SellerController extends BaseController
         ]);
     }
 
+    // ========== ARCHIVE PROPERTY WITH AUDIT LOG ==========
     public function archive()
     {
         $user = $this->checkRoleOrRedirect('seller');
@@ -435,9 +465,23 @@ class SellerController extends BaseController
             return redirect()->to('/seller/dashboard');
         }
 
+        // ========== AUDIT LOG: SELLER ARCHIVE PROPERTY ==========
+        $auditLog = new AuditLogModel();
+        $auditLog->logActivity(
+            'archive',
+            'property',
+            $propertyId,
+            [
+                'title' => $property['title'],
+                'price' => $property['price'],
+                'location' => $property['location'],
+                'source' => 'seller'
+            ]
+        );
+        // ========== END AUDIT LOG ==========
+
         $propertyModel->update($propertyId, ['is_archived' => 1]);
         
-        // Send archive notification
         $this->sendSocketNotification('archive-property', ['id' => $propertyId]);
         
         session()->setFlashdata('success', 'Property archived successfully!');
@@ -460,6 +504,22 @@ class SellerController extends BaseController
             return redirect()->to('/seller/archived');
         }
 
+        // ========== AUDIT LOG: SELLER UNARCHIVE PROPERTY ==========
+        $auditLog = new \App\Models\AuditLogModel();
+        $auditLog->logActivity(
+            'unarchive',
+            'property',
+            $propertyId,
+            [
+                'title' => $property['title'],
+                'price' => $property['price'],
+                'location' => $property['location'],
+                'is_archived' => 0,
+                'source' => 'seller'
+            ]
+        );
+        // ========== END AUDIT LOG ==========
+
         $propertyModel->update($propertyId, ['is_archived' => 0]);
         $restoredProperty = $propertyModel->find($propertyId);
         
@@ -474,10 +534,7 @@ class SellerController extends BaseController
             'image_path' => $restoredProperty['image_path']
         ];
         
-        // Send unarchive notification
         $this->sendSocketNotification('unarchive-property', ['id' => $propertyId]);
-        
-        // Also send as new property to show it again
         $this->sendSocketNotification('new-property', $notificationData);
         
         session()->setFlashdata('success', 'Property restored successfully!');
@@ -505,7 +562,21 @@ class SellerController extends BaseController
             return redirect()->to('/seller/archived');
         }
 
-        // DELETE IMAGE
+        // ========== AUDIT LOG: SELLER DELETE PROPERTY ==========
+        $auditLog = new AuditLogModel();
+        $auditLog->logActivity(
+            'delete',
+            'property',
+            $propertyId,
+            [
+                'title' => $property['title'],
+                'price' => $property['price'],
+                'location' => $property['location'],
+                'source' => 'seller'
+            ]
+        );
+        // ========== END AUDIT LOG ==========
+
         if (!empty($property['image_path']) && file_exists(FCPATH . $property['image_path'])) {
             unlink(FCPATH . $property['image_path']);
         }

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
+use App\Models\AuditLogModel;
 
 class Auth extends BaseController
 {
@@ -19,21 +20,19 @@ class Auth extends BaseController
         $email = $this->request->getPost('email');
         $password = $this->request->getPost('password');
 
-        // Fetch user by email
         $user = $model->where('email', $email)->first();
 
         if (!$user) {
-            $session->setFlashdata('error', 'Invalid credentials! (user not found for email)');
+            $session->setFlashdata('error', 'Invalid credentials!');
             return redirect()->to('/login');
         }
 
-        // Verify password
         if (!password_verify($password, $user['password'])) {
-            $session->setFlashdata('error', 'Invalid credentials! (password mismatch)');
+            $session->setFlashdata('error', 'Invalid credentials!');
             return redirect()->to('/login');
         }
 
-        // Save user to session
+        // FIRST: Save user to session
         $session->set('user', [
             'id'    => $user['id'],
             'name'  => $user['name'],
@@ -41,9 +40,27 @@ class Auth extends BaseController
             'role'  => $user['role']
         ]);
 
+        // ========== PUT THE DIRECT TEST HERE ==========
+        $db = \Config\Database::connect();
+        $db->table('audit_logs')->insert([
+            'actor_user_id' => $user['id'],
+            'actor_role' => $user['role'],
+            'activity_type' => 'direct_test',
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+        // ========== END DIRECT TEST ==========
+
+        // SECOND: Add audit log
+        $auditLog = new \App\Models\AuditLogModel();
+        $auditLog->logActivity(
+            'login',
+            'user',
+            $user['id'],
+            ['email' => $user['email'], 'name' => $user['name'], 'role' => $user['role']]
+        );
+
         $role = $user['role'] ?? null;
 
-        // Redirect based on role
         if ($role === 'admin') {
             $session->setFlashdata('success', 'Login successful!');
             return redirect()->to('/admin/dashboard');
@@ -110,6 +127,16 @@ class Auth extends BaseController
         // Get the newly created user
         $newUser = $model->find($userId);
 
+        // ========== ADD AUDIT LOG FOR REGISTRATION ==========
+        $auditLog = new AuditLogModel();
+        $auditLog->logActivity(
+            'register',
+            'user',
+            $userId,
+            ['email' => $newUser['email'], 'name' => $newUser['name'], 'role' => $newUser['role']]
+        );
+        // ========== END AUDIT LOG ==========
+
         // Send socket notification for real-time user registration
         $this->sendSocketNotification('new-user', [
             'id' => $newUser['id'],
@@ -132,6 +159,21 @@ class Auth extends BaseController
 
     public function logout()
     {
+        $session = session();
+        $user = $session->get('user');
+        
+        // ========== ADD AUDIT LOG FOR LOGOUT ==========
+        if ($user) {
+            $auditLog = new \App\Models\AuditLogModel();
+            $auditLog->logActivity(
+                'logout',
+                'user',
+                $user['id'],
+                ['email' => $user['email'], 'name' => $user['name'], 'role' => $user['role']]
+            );
+        }
+        // ========== END AUDIT LOG ==========
+        
         session()->destroy();
         return redirect()->to('/');
     }

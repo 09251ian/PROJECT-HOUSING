@@ -104,6 +104,7 @@
       <a class="btn btn-outline-light btn-sm" href="<?= base_url('/admin/users') ?>">Users</a>
       <a class="btn btn-outline-light btn-sm" href="<?= base_url('/admin/offers') ?>">Offers</a>
       <a class="btn btn-outline-light btn-sm" href="<?= base_url('/admin/payments') ?>">Payments</a>
+      <a class="btn btn-outline-light btn-sm" href="<?= base_url('/admin/audit') ?>">Audit</a>
       <a class="btn btn-danger btn-sm" href="<?= base_url('/logout') ?>">Logout</a>
     </div>
   </div>

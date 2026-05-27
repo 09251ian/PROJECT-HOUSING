@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 10, 2026 at 07:19 AM
+-- Generation Time: May 27, 2026 at 01:16 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.1.25
 
@@ -24,6 +24,34 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `audit_logs`
+--
+
+CREATE TABLE `audit_logs` (
+  `id` int(11) NOT NULL,
+  `actor_user_id` int(11) DEFAULT NULL,
+  `actor_role` varchar(30) DEFAULT NULL,
+  `activity_type` varchar(50) NOT NULL,
+  `entity_type` varchar(50) DEFAULT NULL,
+  `entity_id` int(11) DEFAULT NULL,
+  `metadata` text DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Dumping data for table `audit_logs`
+--
+
+INSERT INTO `audit_logs` (`id`, `actor_user_id`, `actor_role`, `activity_type`, `entity_type`, `entity_id`, `metadata`, `created_at`) VALUES
+(1, 159, 'admin', 'login', NULL, NULL, '{\"email\":\"admin@example.com\"}', '2026-05-27 06:33:55'),
+(2, 159, 'admin', 'logout', NULL, NULL, '[]', '2026-05-27 06:37:44'),
+(3, 3, 'seller', 'login', NULL, NULL, '{\"email\":\"jeycel@gmail.com\"}', '2026-05-27 06:37:53'),
+(4, 3, 'seller', 'logout', NULL, NULL, '[]', '2026-05-27 06:38:00'),
+(5, 159, 'admin', 'login', NULL, NULL, '{\"email\":\"admin@example.com\"}', '2026-05-27 06:38:12');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `favorites`
 --
 
@@ -33,6 +61,13 @@ CREATE TABLE `favorites` (
   `property_id` int(11) NOT NULL,
   `created_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Dumping data for table `favorites`
+--
+
+INSERT INTO `favorites` (`id`, `buyer_id`, `property_id`, `created_at`) VALUES
+(1, 5, 18, '2026-05-15 04:16:43');
 
 -- --------------------------------------------------------
 
@@ -81,7 +116,8 @@ CREATE TABLE `migrations` (
 
 INSERT INTO `migrations` (`id`, `version`, `class`, `group`, `namespace`, `time`, `batch`) VALUES
 (1, '2026-05-09-000001', 'App\\Database\\Migrations\\CreateFavoritesTable', 'default', 'App', 1778379360, 1),
-(2, '2026-05-09-000002', 'App\\Database\\Migrations\\CreatePaymentsTable', 'default', 'App', 1778379364, 1);
+(2, '2026-05-09-000002', 'App\\Database\\Migrations\\CreatePaymentsTable', 'default', 'App', 1778379364, 1),
+(3, '2026-05-27-041515', 'App\\Database\\Migrations\\CreateAuditLogsTable', 'default', 'App', 1779855638, 2);
 
 -- --------------------------------------------------------
 
@@ -338,6 +374,12 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `contact`, `bio`
 --
 
 --
+-- Indexes for table `audit_logs`
+--
+ALTER TABLE `audit_logs`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `favorites`
 --
 ALTER TABLE `favorites`
@@ -396,10 +438,16 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `audit_logs`
+--
+ALTER TABLE `audit_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
 -- AUTO_INCREMENT for table `favorites`
 --
 ALTER TABLE `favorites`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `messages`
@@ -411,7 +459,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `offers`

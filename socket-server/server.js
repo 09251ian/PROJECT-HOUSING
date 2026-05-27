@@ -143,7 +143,7 @@ app.post('/new-user', (req, res) => {
     // Broadcast to all connected admin dashboards
     io.emit('new-user', user);
     
-    return res.json({
+    return res.jsn({
         success: true,
         message: 'New user broadcasted to admin dashboard'
     });
@@ -158,7 +158,7 @@ app.get('/online-users', (req, res) => {
     
     res.json({
         success: true,
-        onlineCount: onlineUsers.length,
+        onlineCoount: onlineUsers.length,
         users: onlineUsers
     });
 });

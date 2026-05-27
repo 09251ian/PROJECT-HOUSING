@@ -56,3 +56,7 @@ $routes->post('admin/delete-property', 'AdminController::deleteProperty');
 $routes->get('/api/property/(:num)', 'SellerController::getProperty/$1');
 $routes->get('/admin/get_counts', 'AdminController::getCounts');
 $routes->post('/admin/update-offer-status', 'AdminController::updateOfferStatus');
+
+$routes->get('admin/audit', 'AdminController::audit');
+$routes->post('admin/archive-property', 'AdminController::archiveProperty');
+$routes->post('admin/unarchive-property', 'AdminController::unarchiveProperty');
