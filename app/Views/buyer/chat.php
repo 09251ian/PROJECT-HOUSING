@@ -11,11 +11,19 @@ include __DIR__ . '/../partials/header.php';
     .chat-message.receiver{background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.22);align-self:flex-start}
     #chat-box{height:420px;overflow-y:auto;display:flex;flex-direction:column;padding:12px;border:1px solid rgba(255,255,255,.10);border-radius:14px;background:rgba(15,27,51,.55)}
     .chat-meta{color:rgba(233,240,255,.7);font-size:12.5px}
+
+    .chat-message {
+      padding: 10px;
+      border-radius: 12px;
+      max-width: 75%;
+      border: 1px solid rgba(255,255,255,.08);
+      margin-bottom: 15px;  /* ← ADD THIS LINE */
+    }
   </style>
 
   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
     <h4 class="m-0">Chat Messages</h4>
-    <div class="text-muted small">Property #<?= esc($propertyId ?? '') ?></div>
+    <div class="text-white small">Property #<?= esc($propertyId ?? '') ?></div>
   </div>
 
   <div class="chat-shell">
@@ -29,7 +37,7 @@ include __DIR__ . '/../partials/header.php';
           </div>
         <?php endforeach; ?>
       <?php else: ?>
-        <p class="text-muted">No messages yet.</p>
+        <p class="text-white">No messages yet.</p>
       <?php endif; ?>
     </div>
 

@@ -9,7 +9,7 @@
       </div>
       
     </div>
-    <div class="mt-3 text-muted small">© <?= date('Y') ?> House Marketplace. All rights reserved.</div>
+    <div class="mt-3 text-white small">© <?= date('Y') ?> House Marketplace. All rights reserved.</div>
   </div>
 </footer>
 

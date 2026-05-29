@@ -53,6 +53,13 @@
         color: #6c757d;
         border-color: #0f3460;
     }
+    /* Global Search Bar */
+    .global-search-bar {
+        background: transparent;
+        border-radius: 10px;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+    }
   </style>
 </head>
 <body class="app-dark">
@@ -65,6 +72,7 @@
       <a class="btn btn-outline-light btn-sm" href="<?= base_url('/admin/offers') ?>">Offers</a>
       <a class="btn btn-outline-light btn-sm" href="<?= base_url('/admin/payments') ?>">Payments</a>
       <a class="btn btn-outline-light btn-sm" href="<?= base_url('/admin/audit') ?>">Audit</a>
+      <a class="btn btn-outline-light btn-sm active" href="<?= base_url('/admin/users') ?>">Users</a>
       <a class="btn btn-danger btn-sm" href="<?= base_url('/logout') ?>">Logout</a>
     </div>
   </div>
@@ -82,38 +90,40 @@
       <span id="total-sellers" style="color: #ffffff;"><?= $sellersPager->total ?? 0 ?></span> Sellers
     </div>
   </div>
-  
-  <!-- Buyers Search Bar -->
-  <div class="row mb-3">
-    <div class="col-md-4">
-      <form method="get" action="<?= base_url('/admin/users') ?>" class="d-flex gap-2">
-        <input type="hidden" name="type" value="buyers">
+
+  <!-- ========== GLOBAL SEARCH BAR ========== -->
+  <div class="global-search-bar">
+    <form method="get" action="<?= base_url('/admin/users') ?>" class="row g-2">
+      <div class="col-md-5">
         <div class="input-group">
           <span class="input-group-text bg-dark text-secondary border-secondary">
-            <i class="bi bi-search"></i>
+            <i class="bi bi-search-heart"></i>
           </span>
           <input type="text" 
-                 name="buyers_search" 
+                 name="global_search" 
                  class="form-control bg-dark text-white border-secondary" 
-                 placeholder="Search buyers by name, email, or contact..." 
-                 value="<?= esc($buyersSearch ?? '') ?>">
+                 placeholder="Global search: Search by name, email, or contact across all users..." 
+                 value="<?= esc($globalSearch ?? '') ?>">
           <button class="btn btn-primary" type="submit">
             <i class="bi bi-search"></i> Search
           </button>
         </div>
-        <?php if (!empty($buyersSearch)): ?>
-          <a href="<?= base_url('/admin/users') ?>" class="btn btn-outline-secondary">
+      </div>
+      <div class="col-md-2">
+        <?php if (!empty($globalSearch)): ?>
+          <a href="<?= base_url('/admin/users') ?>" class="btn btn-outline-secondary w-100">
             <i class="bi bi-x-circle"></i> Clear
           </a>
         <?php endif; ?>
-      </form>
-      <?php if (!empty($buyersSearch)): ?>
-        <div class="mt-2 text-white small">
-          <i class="bi bi-info-circle"></i> Buyers results for: "<strong class="text-warning"><?= esc($buyersSearch) ?></strong>"
-        </div>
-      <?php endif; ?>
-    </div>
+      </div>
+    </form>
+    <?php if (!empty($globalSearch)): ?>
+      <div class="mt-2 text-white small">
+        <i class="bi bi-info-circle"></i> Global search results for: "<strong class="text-warning"><?= esc($globalSearch) ?></strong>"
+      </div>
+    <?php endif; ?>
   </div>
+  <!-- ========== END GLOBAL SEARCH BAR ========== -->
 
   <!-- BUYERS SECTION -->
   <h5 class="text-white mt-4">
@@ -133,16 +143,20 @@
         </tr>
       </thead>
       <tbody id="buyers-table-body">
-        <?php foreach (($buyers ?? []) as $u): ?>
-          <tr data-user-id="<?= esc($u['id']) ?>" data-user-role="buyer" class="user-row">
-            <td><?= esc($u['id']) ?></td>
-            <td><i class="bi bi-person-circle"></i> <?= esc($u['name']) ?></td>
-            <td><?= esc($u['email']) ?></td>
-            <td><?= esc($u['contact'] ?? 'N/A') ?></td>
-            <td style="max-width:320px;"><?= esc($u['bio'] ?? 'N/A') ?></td>
-            <td><small><?= esc($u['created_at'] ?? 'N/A') ?></small></td>
-          </tr>
-        <?php endforeach; ?>
+        <?php if (!empty($buyers)): ?>
+          <?php foreach ($buyers as $u): ?>
+            <tr data-user-id="<?= esc($u['id']) ?>" data-user-role="buyer" class="user-row">
+              <td><?= esc($u['id']) ?></td>
+              <td><i class="bi bi-person-circle"></i> <?= esc($u['name']) ?></td>
+              <td><?= esc($u['email']) ?></td>
+              <td><?= esc($u['contact'] ?? 'N/A') ?></td>
+              <td style="max-width:320px;"><?= esc($u['bio'] ?? 'N/A') ?></td>
+              <td><small><?= esc($u['created_at'] ?? 'N/A') ?></small></td>
+            </tr>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <tr><td colspan="6" class="text-center text-muted">No buyers found</td></tr>
+        <?php endif; ?>
       </tbody>
     </table>
   </div>
@@ -153,19 +167,19 @@
       <nav aria-label="Buyers pagination">
           <ul class="pagination">
               <?php if ($buyersPager->currentPage > 1): ?>
-                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage - 1 ?>&sellers_page=<?= $sellersPager->currentPage ?? 1 ?>">&laquo; Prev</a></li>
+                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage - 1 ?>&sellers_page=<?= $sellersPager->currentPage ?? 1 ?>&global_search=<?= urlencode($globalSearch ?? '') ?>">&laquo; Prev</a></li>
               <?php else: ?>
                   <li class="page-item disabled"><span class="page-link">&laquo; Prev</span></li>
               <?php endif; ?>
 
               <?php for ($i = 1; $i <= $buyersPager->lastPage; $i++): ?>
                   <li class="page-item <?= $i == $buyersPager->currentPage ? 'active' : '' ?>">
-                      <a class="page-link" href="?buyers_page=<?= $i ?>&sellers_page=<?= $sellersPager->currentPage ?? 1 ?>"><?= $i ?></a>
+                      <a class="page-link" href="?buyers_page=<?= $i ?>&sellers_page=<?= $sellersPager->currentPage ?? 1 ?>&global_search=<?= urlencode($globalSearch ?? '') ?>"><?= $i ?></a>
                   </li>
               <?php endfor; ?>
 
               <?php if ($buyersPager->currentPage < $buyersPager->lastPage): ?>
-                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage + 1 ?>&sellers_page=<?= $sellersPager->currentPage ?? 1 ?>">Next &raquo;</a></li>
+                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage + 1 ?>&sellers_page=<?= $sellersPager->currentPage ?? 1 ?>&global_search=<?= urlencode($globalSearch ?? '') ?>">Next &raquo;</a></li>
               <?php else: ?>
                   <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
               <?php endif; ?>
@@ -176,38 +190,6 @@
       Showing <strong><?= $buyersPager->firstItem ?></strong> to <strong><?= $buyersPager->lastItem ?></strong> of <strong><?= $buyersPager->total ?></strong> buyers
   </div>
   <?php endif; ?>
-
-  <!-- Sellers Search Bar -->
-  <div class="row mb-3">
-    <div class="col-md-4">
-      <form method="get" action="<?= base_url('/admin/users') ?>" class="d-flex gap-2">
-        <input type="hidden" name="type" value="sellers">
-        <div class="input-group">
-          <span class="input-group-text bg-dark text-secondary border-secondary">
-            <i class="bi bi-search"></i>
-          </span>
-          <input type="text" 
-                 name="sellers_search" 
-                 class="form-control bg-dark text-white border-secondary" 
-                 placeholder="Search sellers by name, email, or contact..." 
-                 value="<?= esc($sellersSearch ?? '') ?>">
-          <button class="btn btn-primary" type="submit">
-            <i class="bi bi-search"></i> Search
-          </button>
-        </div>
-        <?php if (!empty($sellersSearch)): ?>
-          <a href="<?= base_url('/admin/users') ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-x-circle"></i> Clear
-          </a>
-        <?php endif; ?>
-      </form>
-      <?php if (!empty($sellersSearch)): ?>
-        <div class="mt-2 text-white small">
-          <i class="bi bi-info-circle"></i> Sellers results for: "<strong class="text-warning"><?= esc($sellersSearch) ?></strong>"
-        </div>
-      <?php endif; ?>
-    </div>
-  </div>
 
   <!-- SELLERS SECTION -->
   <h5 class="text-white mt-4">
@@ -227,16 +209,20 @@
         </tr>
       </thead>
       <tbody id="sellers-table-body">
-        <?php foreach (($sellers ?? []) as $u): ?>
-          <tr data-user-id="<?= esc($u['id']) ?>" data-user-role="seller" class="user-row">
-            <td><?= esc($u['id']) ?></td>
-            <td><i class="bi bi-person-circle"></i> <?= esc($u['name']) ?></td>
-            <td><?= esc($u['email']) ?></td>
-            <td><?= esc($u['contact'] ?? 'N/A') ?></td>
-            <td style="max-width:320px;"><?= esc($u['bio'] ?? 'N/A') ?></td>
-            <td><small><?= esc($u['created_at'] ?? 'N/A') ?></small></td>
-          </tr>
-        <?php endforeach; ?>
+        <?php if (!empty($sellers)): ?>
+          <?php foreach ($sellers as $u): ?>
+            <tr data-user-id="<?= esc($u['id']) ?>" data-user-role="seller" class="user-row">
+              <td><?= esc($u['id']) ?></td>
+              <td><i class="bi bi-person-circle"></i> <?= esc($u['name']) ?></td>
+              <td><?= esc($u['email']) ?></td>
+              <td><?= esc($u['contact'] ?? 'N/A') ?></td>
+              <td style="max-width:320px;"><?= esc($u['bio'] ?? 'N/A') ?></td>
+              <td><small><?= esc($u['created_at'] ?? 'N/A') ?></small></td>
+            </tr>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <tr><td colspan="6" class="text-center text-muted">No sellers found</td></tr>
+        <?php endif; ?>
       </tbody>
     </table>
   </div>
@@ -247,19 +233,19 @@
       <nav aria-label="Sellers pagination">
           <ul class="pagination">
               <?php if ($sellersPager->currentPage > 1): ?>
-                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage ?? 1 ?>&sellers_page=<?= $sellersPager->currentPage - 1 ?>">&laquo; Prev</a></li>
+                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage ?? 1 ?>&sellers_page=<?= $sellersPager->currentPage - 1 ?>&global_search=<?= urlencode($globalSearch ?? '') ?>">&laquo; Prev</a></li>
               <?php else: ?>
                   <li class="page-item disabled"><span class="page-link">&laquo; Prev</span></li>
               <?php endif; ?>
 
               <?php for ($i = 1; $i <= $sellersPager->lastPage; $i++): ?>
                   <li class="page-item <?= $i == $sellersPager->currentPage ? 'active' : '' ?>">
-                      <a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage ?? 1 ?>&sellers_page=<?= $i ?>"><?= $i ?></a>
+                      <a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage ?? 1 ?>&sellers_page=<?= $i ?>&global_search=<?= urlencode($globalSearch ?? '') ?>"><?= $i ?></a>
                   </li>
               <?php endfor; ?>
 
               <?php if ($sellersPager->currentPage < $sellersPager->lastPage): ?>
-                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage ?? 1 ?>&sellers_page=<?= $sellersPager->currentPage + 1 ?>">Next &raquo;</a></li>
+                  <li class="page-item"><a class="page-link" href="?buyers_page=<?= $buyersPager->currentPage ?? 1 ?>&sellers_page=<?= $sellersPager->currentPage + 1 ?>&global_search=<?= urlencode($globalSearch ?? '') ?>">Next &raquo;</a></li>
               <?php else: ?>
                   <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
               <?php endif; ?>

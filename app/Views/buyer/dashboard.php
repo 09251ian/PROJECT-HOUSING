@@ -148,8 +148,9 @@ include __DIR__ . '/../partials/header.php';
           $chatExist = $chatsExist[$propertyId] ?? false;
           $isFavorite = $favorites[$propertyId] ?? false;
           $imagePath = !empty($property['image_path']) && file_exists(FCPATH . $property['image_path']) 
-              ? base_url($property['image_path']) 
-              : 'https://via.placeholder.com/400x250?text=No+Image';
+            ? base_url($property['image_path']) . '?v=' . time()
+            : 'https://via.placeholder.com/400x250?text=No+Image';
+
         ?>
         <div class="col-md-6 mb-4 realtime-property" data-property-id="<?= $propertyId ?>">
           <div class="card shadow-sm border-0 rounded-4 h-100">
@@ -180,14 +181,14 @@ include __DIR__ . '/../partials/header.php';
                   <?php endif; ?>
                 </div>
               <?php else: ?>
-                <form method="post" action="<?= base_url('/make_offer') ?>" class="d-flex align-items-center gap-2 mt-2 offer-form">
-                  <?= csrf_field() ?>
-                  <input type="hidden" name="property_id" value="<?= $propertyId ?>">
-                  <input type="number" step="0.01" name="amount" class="form-control w-50" placeholder="Enter offer amount" required>
-                  <button type="submit" class="btn btn-primary btn-sm">Make Offer</button>
-                </form>
-                <div class="offer-status"></div>
-              <?php endif; ?>
+                    <form method="post" action="/PROJECT-HOUSING-main/public/make_offer" class="d-flex align-items-center gap-2 mt-2 offer-form">
+                        <?= csrf_field() ?> 
+                        <input type="hidden" name="property_id" value="<?= $propertyId ?>">
+                        <input type="number" step="0.01" name="amount" class="form-control w-50" placeholder="Enter offer amount" required>
+                        <button type="submit" class="btn btn-primary btn-sm">Make Offer</button>
+                    </form>     
+                    <div class="offer-status"></div>
+                <?php endif; ?>
 
               <div class="mt-3 text-center">
                 <?php if ($chatExist): ?>
@@ -267,8 +268,8 @@ include __DIR__ . '/../partials/header.php';
   <!-- Empty state for when all properties are removed -->
   <div id="empty-state" style="display: none;" class="text-center py-5">
     <i class="bi bi-house-slash" style="font-size: 4rem; color: #6c757d;"></i>
-    <h4 class="text-muted mt-3">No Properties Available</h4>
-    <p class="text-muted">Check back later for new listings!</p>
+    <h4 class="text-white mt-3">No Properties Available</h4>
+    <p class="text-white">Check back later for new listings!</p>
   </div>
 
 </div>
@@ -281,6 +282,21 @@ include __DIR__ . '/../partials/header.php';
 // ========== GET CURRENT USER ==========
 const currentUserId = <?= json_encode($user['id'] ?? 0) ?>;
 console.log('Buyer ID:', currentUserId);
+
+// ========== ADD CONNECTION STATUS INDICATOR ==========
+const statusDiv = document.createElement('div');
+statusDiv.style.position = 'fixed';
+statusDiv.style.bottom = '10px';
+statusDiv.style.right = '10px';
+statusDiv.style.padding = '5px 10px';
+statusDiv.style.borderRadius = '5px';
+statusDiv.style.fontSize = '12px';
+statusDiv.style.zIndex = '9999';
+statusDiv.style.backgroundColor = '#dc3545';
+statusDiv.style.color = 'white';
+statusDiv.innerHTML = '🔌 Connecting...';
+document.body.appendChild(statusDiv);
+// ========== END CONNECTION STATUS ==========
 
 // ========== CONNECT TO WEBSOCKET ==========
 const socket = io('http://localhost:3000', {
@@ -310,7 +326,6 @@ function showNotification(message, type = 'success') {
         `;
         alertArea.insertAdjacentHTML('afterbegin', alertHTML);
         
-        // Auto remove after 5 seconds
         setTimeout(() => {
             const alert = alertArea.querySelector('.alert');
             if (alert) alert.remove();
@@ -318,7 +333,6 @@ function showNotification(message, type = 'success') {
     }
 }
 
-// Check and show/hide empty state
 function checkEmptyState() {
     const propertiesContainer = document.getElementById('property-container');
     const emptyState = document.getElementById('empty-state');
@@ -360,10 +374,14 @@ if (!document.querySelector('#notification-styles')) {
     document.head.appendChild(style);
 }
 
-// Function to add property to buyer dashboard
+// ========== FUNCTION TO ADD PROPERTY TO DASHBOARD ==========
 function addPropertyToBuyerDashboard(property) {
+    console.log('🔧 addPropertyToBuyerDashboard CALLED');
     const propertiesContainer = document.getElementById('property-container');
-    if (!propertiesContainer) return;
+    if (!propertiesContainer) {
+        console.error('Properties container not found!');
+        return;
+    }
     
     // Check if property already exists
     if (document.querySelector(`.realtime-property[data-property-id="${property.id}"]`)) {
@@ -371,9 +389,13 @@ function addPropertyToBuyerDashboard(property) {
         return;
     }
     
-    const imagePath = property.image_path && property.image_path !== 'null' && property.image_path !== 'uploads/null'
-        ? '/' + property.image_path.replace(/^\//, '')
-        : 'https://via.placeholder.com/400x250?text=No+Image';
+    // Build image path
+    let imagePath = 'https://via.placeholder.com/400x250?text=No+Image';
+    if (property.image_path && property.image_path !== 'null' && property.image_path !== '') {
+        let cleanPath = property.image_path.replace(/^\/+/, '');
+        imagePath = 'http://localhost/PROJECT-HOUSING-main/public/' + cleanPath + '?t=' + new Date().getTime();
+        console.log('Image path constructed:', imagePath);
+    }
     
     const csrfToken = document.querySelector('input[name="csrf_test_name"]')?.value || '';
     
@@ -384,7 +406,7 @@ function addPropertyToBuyerDashboard(property) {
                      onerror="this.src='https://via.placeholder.com/400x250?text=No+Image'" alt="Property Image">
                 <div class="card-body">
                     <h5 class="card-title text-success fw-bold property-title">${escapeHtml(property.title)}</h5>
-                    <p class="property-description">${escapeHtml(property.description ? property.description.substring(0, 150) : '')}${property.description && property.description.length > 150 ? '...' : ''}</p>
+                    <p class="property-description">${escapeHtml(property.description ? property.description.substring(0, 150) : '')}</p>
                     <p class="fw-bold text-primary property-price">₱${parseFloat(property.price || 0).toLocaleString()}</p>
                     <p class="mb-1 property-location"><b>📍 Location:</b> ${escapeHtml(property.location)}</p>
                     <p class="property-seller"><small>Seller: ${escapeHtml(property.seller_name)}</small></p>
@@ -419,19 +441,19 @@ function addPropertyToBuyerDashboard(property) {
     const newProperty = document.querySelector(`.realtime-property[data-property-id="${property.id}"]`);
     if (newProperty) {
         newProperty.classList.add('property-highlight');
-        setTimeout(() => {
-            newProperty.classList.remove('property-highlight');
-        }, 2000);
-        
+        setTimeout(() => newProperty.classList.remove('property-highlight'), 2000);
         newProperty.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     
     checkEmptyState();
+    console.log('✅ Property added successfully');
 }
 
 // ========== SOCKET CONNECTION EVENTS ==========
 socket.on('connect', () => {
     console.log('✅ Connected to websocket server');
+    statusDiv.style.backgroundColor = '#28a745';
+    statusDiv.innerHTML = '🔌 WebSocket Connected';
     socket.emit('register', currentUserId.toString());
 });
 
@@ -441,6 +463,8 @@ socket.on('registered', (data) => {
 
 socket.on('disconnect', () => {
     console.log('❌ Disconnected from websocket server');
+    statusDiv.style.backgroundColor = '#dc3545';
+    statusDiv.innerHTML = '🔌 Disconnected';
 });
 
 socket.on('connect_error', (error) => {
@@ -448,51 +472,62 @@ socket.on('connect_error', (error) => {
     showNotification('Real-time updates unavailable. Page will still work normally.', 'warning');
 });
 
+// ========== LISTEN FOR NEW PROPERTIES (THIS IS THE CRITICAL EVENT) ==========
+socket.on('property-added', function(property) {
+    console.log('🔔🔔🔔 PROPERTY-ADDED EVENT RECEIVED! 🔔🔔🔔');
+    console.log('Property title:', property.title);
+    console.log('Property ID:', property.id);
+    console.log('Image path:', property.image_path);
+    console.log('Full property data:', property);
+    
+    // Check if property already exists
+    const existingProperty = document.querySelector(`.realtime-property[data-property-id="${property.id}"]`);
+    console.log('Existing property found?', existingProperty ? 'YES - skipping' : 'NO - will add');
+    
+    if (!existingProperty) {
+        console.log('Calling addPropertyToBuyerDashboard...');
+        addPropertyToBuyerDashboard(property);
+        showNotification(`New property available: ${property.title}`, 'success');
+    } else {
+        console.log('Property already exists in DOM, skipping');
+    }
+});
+
 // ========== LISTEN FOR PROPERTY UPDATES ==========
 socket.on('property-updated', function(property) {
     console.log('✏️ Property update received:', property.title);
-    
+    console.log('Image path in update:', property.image_path);
+
     const propertyCard = document.querySelector(`.realtime-property[data-property-id="${property.id}"]`);
     
     if (propertyCard) {
-        // Update title
         const titleElement = propertyCard.querySelector('.card-title');
-        if (titleElement) titleElement.textContent = property.title;
-        
-        // Update price
         const priceElement = propertyCard.querySelector('.property-price');
-        if (priceElement) priceElement.textContent = `₱${parseFloat(property.price || 0).toLocaleString()}`;
-        
-        // Update location
         const locationElement = propertyCard.querySelector('.property-location');
-        if (locationElement) locationElement.innerHTML = `<b>📍 Location:</b> ${escapeHtml(property.location)}`;
-        
-        // Update description
         const descElement = propertyCard.querySelector('.property-description');
+        const imgElement = propertyCard.querySelector('.card-img-top');
+        
+        if (titleElement) titleElement.textContent = property.title;
+        if (priceElement) priceElement.textContent = `₱${parseFloat(property.price || 0).toLocaleString()}`;
+        if (locationElement) locationElement.innerHTML = `<b>📍 Location:</b> ${escapeHtml(property.location)}`;
         if (descElement) descElement.textContent = property.description;
         
-        // Highlight the card
-        propertyCard.classList.add('property-highlight');
-        setTimeout(() => {
-            propertyCard.classList.remove('property-highlight');
-        }, 2000);
+        if (property.image_path && property.image_path !== 'null' && property.image_path !== '') {
+            let cleanPath = property.image_path.replace(/^\/+/, '');
+            let newImagePath = 'http://localhost/PROJECT-HOUSING-main/public/' + cleanPath + '?t=' + new Date().getTime();
+            console.log('Updating image to:', newImagePath);
+            if (imgElement) imgElement.src = newImagePath;
+        }
         
+        propertyCard.classList.add('property-highlight');
+        setTimeout(() => propertyCard.classList.remove('property-highlight'), 2000);
         showNotification(`Property updated: ${property.title}`, 'info');
+    } else {
+        console.log('Property card not found for ID:', property.id);
     }
 });
 
-// ========== LISTEN FOR NEW PROPERTIES ==========
-socket.on('property-added', function(property) {
-    console.log('📦 New property received:', property.title);
-    
-    // Check if property already exists
-    if (!document.querySelector(`.realtime-property[data-property-id="${property.id}"]`)) {
-        addPropertyToBuyerDashboard(property);
-        showNotification(`New property available: ${property.title}`, 'success');
-    }
-});
-
-// ========== LISTEN FOR ARCHIVED PROPERTIES (Hidden from buyers) - THIS IS THE KEY EVENT ==========
+// ========== LISTEN FOR ARCHIVED PROPERTIES ==========
 socket.on('archive-property', function(data) {
     console.log('📦 Property archived - removing from buyer dashboard:', data.id);
     const propertyCard = document.querySelector(`.realtime-property[data-property-id="${data.id}"]`);
@@ -503,46 +538,33 @@ socket.on('archive-property', function(data) {
             checkEmptyState();
             showNotification('A property has been removed from listings', 'info');
         }, 300);
-    } else {
-        console.log('Property card not found for ID:', data.id);
     }
 });
 
-// ========== LISTEN FOR UNARCHIVED PROPERTIES (Reappear for buyers) ==========
+// ========== LISTEN FOR UNARCHIVED PROPERTIES ==========
 socket.on('unarchive-property', function(data) {
     console.log('📦 Property unarchived - adding back to buyer dashboard:', data.id);
-    
-    // Fetch the restored property details via AJAX
     fetch(`/api/property/${data.id}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Property not found');
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(property => {
-            console.log('Fetched unarchived property:', property);
             addPropertyToBuyerDashboard(property);
             showNotification(`Property "${property.title}" is back on the market!`, 'success');
         })
         .catch(error => {
             console.error('Error fetching restored property:', error);
-            // Fallback: reload page to get the property
             location.reload();
         });
 });
 
-// ========== LISTEN FOR PROPERTY DELETION (Permanent delete) ==========
+// ========== LISTEN FOR PROPERTY DELETION ==========
 socket.on('property-deleted', function(data) {
     console.log('🗑️ Property deleted:', data.id);
     const propertyCard = document.querySelector(`.realtime-property[data-property-id="${data.id}"]`);
     if (propertyCard) {
         propertyCard.classList.add('property-fade-out');
-        setTimeout(() => {
-            propertyCard.remove();
-            checkEmptyState();
-            showNotification('A property has been permanently removed', 'danger');
-        }, 300);
+        setTimeout(() => propertyCard.remove(), 300);
+        checkEmptyState();
+        showNotification('A property has been permanently removed', 'danger');
     }
 });
 
@@ -561,7 +583,6 @@ socket.on('offer-status-updated', function(data) {
                 if (offerForm) offerForm.style.display = 'none';
             } else if (data.status === 'rejected') {
                 offerStatus.innerHTML = `<div class="mt-2"><span class="badge bg-danger">❌ ${data.message}</span></div>`;
-                // Re-enable the offer form for new offers
                 const offerForm = propertyCard.querySelector('.offer-form');
                 if (offerForm) offerForm.style.display = 'flex';
             }
@@ -580,8 +601,7 @@ socket.on('new-offer', function(data) {
 // Initial check for empty state
 setTimeout(checkEmptyState, 500);
 
-console.log('Buyer dashboard ready - listening for real-time archive/unarchive updates');
-console.log('Waiting for archive-property events...');
+console.log('Buyer dashboard ready - waiting for real-time updates...');
 </script>
 
 <!-- Bootstrap JS for alerts -->

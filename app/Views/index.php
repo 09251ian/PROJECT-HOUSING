@@ -66,7 +66,7 @@
           <div class="d-flex align-items-center justify-content-between mb-3">
             <div>
               <div class="section-title text-white">Quick Search</div>
-              <div class="text-muted small">Search by title and location</div>
+              <div class="text-white small">Search by title and location</div>
             </div>
             <span class="badge text-bg-primary">Marketplace</span>
           </div>
@@ -95,7 +95,7 @@
             <div class="text-primary fs-3"><i class="bi bi-shield-check"></i></div>
             <div>
               <div class="fw-bold">Verified Listings</div>
-              <div class="text-muted small">Curated properties with clear details.</div>
+              <div class="text-white small">Curated properties with clear details.</div>
             </div>
           </div>
         </div>
@@ -106,7 +106,7 @@
             <div class="text-primary fs-3"><i class="bi bi-chat-dots"></i></div>
             <div>
               <div class="fw-bold">Fast Messaging</div>
-              <div class="text-muted small">Contact sellers without leaving the site.</div>
+              <div class="text-white small">Contact sellers without leaving the site.</div>
             </div>
           </div>
         </div>
@@ -117,7 +117,7 @@
             <div class="text-primary fs-3"><i class="bi bi-credit-card"></i></div>
             <div>
               <div class="fw-bold">Secure Offers & Payments</div>
-              <div class="text-muted small">Track your transactions in one dashboard.</div>
+              <div class="text-white small">Track your transactions in one dashboard.</div>
             </div>
           </div>
         </div>
@@ -131,7 +131,7 @@
     <div class="d-flex align-items-end justify-content-between gap-3 mb-3">
       <div>
         <div class="section-title text-white fs-4">Featured Properties</div>
-        <div class="text-muted">A quick snapshot of what’s available today.</div>
+        <div class="text-white">A quick snapshot of what’s available today.</div>
       </div>
       <a href="<?= base_url('/buyer/dashboard') ?>" class="btn btn-outline-primary">
         View all
@@ -182,28 +182,28 @@
 <section class="py-5">
   <div class="container">
     <div class="section-title text-white fs-4 mb-2">How it works</div>
-    <div class="text-muted mb-4">Three simple steps to buy or sell with confidence.</div>
+    <div class="text-white mb-4">Three simple steps to buy or sell with confidence.</div>
 
     <div class="row g-4">
       <div class="col-md-4">
         <div class="trust-card">
           <div class="text-primary fw-bold mb-2"><i class="bi bi-1-circle"></i> Step 1</div>
           <div class="fw-bold">Browse & Save</div>
-          <div class="text-muted small">Search properties and save your favorites.</div>
+          <div class="text-white small">Search properties and save your favorites.</div>
         </div>
       </div>
       <div class="col-md-4">
         <div class="trust-card">
           <div class="text-primary fw-bold mb-2"><i class="bi bi-2-circle"></i> Step 2</div>
           <div class="fw-bold">Message Sellers</div>
-          <div class="text-muted small">Ask questions and negotiate offers.</div>
+          <div class="text-white small">Ask questions and negotiate offers.</div>
         </div>
       </div>
       <div class="col-md-4">
         <div class="trust-card">
           <div class="text-primary fw-bold mb-2"><i class="bi bi-3-circle"></i> Step 3</div>
           <div class="fw-bold">Make an Offer</div>
-          <div class="text-muted small">Track status and manage transactions.</div>
+          <div class="text-white small">Track status and manage transactions.</div>
         </div>
       </div>
     </div>

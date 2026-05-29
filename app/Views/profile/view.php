@@ -36,7 +36,7 @@ $userRole = $userRole ?? (session()->get('role') ?? null);
             <div class="section-title fs-3 text-white mb-1">
               <i class="bi bi-person-circle me-2 text-success"></i><?= esc($user['name'] ?? '') ?>
             </div>
-            <div class="text-muted small">
+            <div class="text-white small">
               <i class="bi bi-tag me-2"></i><?= ucfirst(esc($user['role'] ?? '')) ?>
             </div>
           </div>
@@ -72,7 +72,7 @@ $userRole = $userRole ?? (session()->get('role') ?? null);
         </div>
       </div>
 
-      <div class="mt-3 text-muted small">
+      <div class="mt-3 text-white small">
         <i class="bi bi-shield-check me-2"></i>Your profile helps other users trust and connect with you.
       </div>
     </div>

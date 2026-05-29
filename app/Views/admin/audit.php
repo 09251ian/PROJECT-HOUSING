@@ -70,9 +70,43 @@
 <div class="container py-4">
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h3 class="text-white mb-0">
-      <i class="bi bi-journal-text"></i> Audit Report
+      <i class="bi bi-journal-text"></i> Audit Logs
     </h3>
   </div>
+
+  <!-- ========== GLOBAL SEARCH BAR ========== -->
+  <div class="search-bar mb-4">
+    <form method="get" action="<?= base_url('/admin/audit') ?>" class="row g-2">
+      <div class="col-md-6">
+        <div class="input-group">
+          <span class="input-group-text bg-dark text-secondary border-secondary">
+            <i class="bi bi-search-heart"></i>
+          </span>
+          <input type="text" 
+                 name="global_search" 
+                 class="form-control bg-dark text-white border-secondary" 
+                 placeholder="Global search: Search by user ID, role, activity, property title..." 
+                 value="<?= esc($globalSearch ?? '') ?>">
+          <button class="btn btn-primary" type="submit">
+            <i class="bi bi-search"></i> Search
+          </button>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <?php if (!empty($globalSearch)): ?>
+          <a href="<?= base_url('/admin/audit') ?>" class="btn btn-outline-secondary w-100">
+            <i class="bi bi-x-circle"></i> Clear
+          </a>
+        <?php endif; ?>
+      </div>
+    </form>
+    <?php if (!empty($globalSearch)): ?>
+      <div class="mt-2 text-white-50 small">
+        <i class="bi bi-info-circle"></i> Global search results for: "<strong class="text-warning"><?= esc($globalSearch) ?></strong>"
+      </div>
+    <?php endif; ?>
+  </div>
+  <!-- ========== END GLOBAL SEARCH BAR ========== -->
 
   <!-- ========== TABLE 1: LOGIN/LOGOUT HISTORY ========== -->
   <div class="section-title">
@@ -80,40 +114,6 @@
       <i class="bi bi-box-arrow-in-right"></i> Login / Logout History
     </h4>
     <p class="text-white small">Track user sessions and authentication activities</p>
-  </div>
-
-  <!-- Search Bar for Login/Logout Table -->
-  <div class="search-bar">
-    <form method="get" action="<?= base_url('/admin/audit') ?>" class="row g-2">
-      <div class="col-md-4">
-        <input type="hidden" name="property_page" value="<?= $propertyPager->currentPage ?? 1 ?>">
-        <div class="input-group">
-          <span class="input-group-text bg-dark text-secondary border-secondary">
-            <i class="bi bi-search"></i>
-          </span>
-          <input type="text" 
-                 name="login_search" 
-                 class="form-control bg-dark text-white border-secondary" 
-                 placeholder="Search by user ID, role, or activity..." 
-                 value="<?= esc($loginSearch ?? '') ?>">
-          <button class="btn btn-primary" type="submit">
-            <i class="bi bi-search"></i> Search
-          </button>
-        </div>
-      </div>
-      <div class="col-md-2">
-        <?php if (!empty($loginSearch)): ?>
-          <a href="<?= base_url('/admin/audit') ?>" class="btn btn-outline-secondary w-100">
-            <i class="bi bi-x-circle"></i> Clear
-          </a>
-        <?php endif; ?>
-      </div>
-    </form>
-    <?php if (!empty($loginSearch)): ?>
-      <div class="mt-2 text-white-50 small">
-        <i class="bi bi-info-circle"></i> Showing results for: "<strong class="text-warning"><?= esc($loginSearch) ?></strong>"
-      </div>
-    <?php endif; ?>
   </div>
 
   <div class="table-responsive app-table-wrap">
@@ -127,7 +127,7 @@
           <th>Details</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="login-logout-table">
         <?php if (empty($loginLogs)): ?>
           <tr><td colspan="5" class="text-center text-white">No login/logout records found</td></tr>
         <?php else: ?>
@@ -154,7 +154,7 @@
                   <i class="bi bi-person-plus"></i> New user: <strong><?= esc($meta['name'] ?? '') ?></strong><br>
                   <small>Email: <?= esc($meta['email'] ?? '') ?> | Role: <?= esc($meta['role'] ?? '') ?></small>
                 <?php else: ?>
-                  <span class="text-muted">—</span>
+                  <span class="text-white">—</span>
                 <?php endif; ?>
               </td>
             </tr>
@@ -213,40 +213,6 @@
     <p class="text-white small">Track property creations, updates, deletions, and archive status</p>
   </div>
 
-  <!-- Search Bar for Property CRUD Table -->
-  <div class="search-bar">
-    <form method="get" action="<?= base_url('/admin/audit') ?>" class="row g-2">
-      <div class="col-md-4">
-        <input type="hidden" name="login_page" value="<?= $loginPager->currentPage ?? 1 ?>">
-        <div class="input-group">
-          <span class="input-group-text bg-dark text-secondary border-secondary">
-            <i class="bi bi-search"></i>
-          </span>
-          <input type="text" 
-                 name="property_search" 
-                 class="form-control bg-dark text-white border-secondary" 
-                 placeholder="Search by property title, action, or user..." 
-                 value="<?= esc($propertySearch ?? '') ?>">
-          <button class="btn btn-primary" type="submit">
-            <i class="bi bi-search"></i> Search
-          </button>
-        </div>
-      </div>
-      <div class="col-md-2">
-        <?php if (!empty($propertySearch)): ?>
-          <a href="<?= base_url('/admin/audit') ?>" class="btn btn-outline-secondary w-100">
-            <i class="bi bi-x-circle"></i> Clear
-          </a>
-        <?php endif; ?>
-      </div>
-    </form>
-    <?php if (!empty($propertySearch)): ?>
-      <div class="mt-2 text-white-50 small">
-        <i class="bi bi-info-circle"></i> Showing results for: "<strong class="text-warning"><?= esc($propertySearch) ?></strong>"
-      </div>
-    <?php endif; ?>
-  </div>
-
   <div class="table-responsive app-table-wrap">
     <table class="table table-dark table-striped align-middle">
       <thead>
@@ -258,7 +224,7 @@
           <th>Changes / Details</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="property-crud-table">
         <?php if (empty($propertyLogs)): ?>
           <tr><td colspan="5" class="text-center text-white">No property activity records found</td></tr>
         <?php else: ?>
@@ -312,7 +278,7 @@
                 
                 <?php elseif ($l['activity_type'] === 'update'): ?>
                   <div class="text-warning">
-                    <i class="bi bi-pencil-square"></i> Changes:<br>
+                    <i class="bi bi-pencil-square"></i> Property Information Changed<br>
                     <?php if (isset($meta['old']['title']) && $meta['old']['title'] != $meta['new']['title']): ?>
                       Title: <span class="old-value"><?= esc($meta['old']['title']) ?></span> → <span class="new-value"><?= esc($meta['new']['title']) ?></span><br>
                     <?php endif; ?>
@@ -398,5 +364,278 @@
   <?php endif; ?>
 
 </div>
+
+<!-- SOCKET.IO FOR REAL-TIME AUDIT UPDATES -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+// Connect to WebSocket server
+const socket = io('http://localhost:3000', {
+    transports: ['websocket', 'polling'],
+    reconnection: true
+});
+
+// Connection status indicator
+const statusDiv = document.createElement('div');
+statusDiv.style.position = 'fixed';
+statusDiv.style.bottom = '10px';
+statusDiv.style.left = '10px';
+statusDiv.style.padding = '5px 10px';
+statusDiv.style.borderRadius = '5px';
+statusDiv.style.fontSize = '12px';
+statusDiv.style.zIndex = '9999';
+statusDiv.style.backgroundColor = '#dc3545';
+statusDiv.style.color = 'white';
+statusDiv.innerHTML = '🔌 Connecting...';
+document.body.appendChild(statusDiv);
+
+socket.on('connect', () => {
+    console.log('✅ Connected to WebSocket for real-time audit');
+    statusDiv.style.backgroundColor = '#28a745';
+    statusDiv.innerHTML = '🔌 Audit Live';
+    
+    // Register as admin
+    socket.emit('register', 'admin_audit');
+});
+
+socket.on('disconnect', () => {
+    statusDiv.style.backgroundColor = '#dc3545';
+    statusDiv.innerHTML = '🔌 Disconnected';
+});
+
+socket.on('connect_error', (error) => {
+    console.error('Connection error:', error);
+    statusDiv.style.backgroundColor = '#dc3545';
+    statusDiv.innerHTML = '🔌 Connection Failed';
+});
+
+// Listen for new audit logs in real-time
+socket.on('audit-log-added', (auditLog) => {
+    console.log('📋 New audit log received:', auditLog);
+    
+    // Check if it's a login/logout event
+    if (auditLog.activity_type === 'login' || auditLog.activity_type === 'logout' || auditLog.activity_type === 'register') {
+        addLoginLogoutToTable(auditLog);
+    } else if (auditLog.entity_type === 'property') {
+        addPropertyLogToTable(auditLog);
+    }
+    
+    // Show notification
+    showNotification(auditLog);
+});
+
+// Function to add login/logout to table
+// Function to add login/logout to table
+function addLoginLogoutToTable(log) {
+    const tableBody = document.querySelector('#login-logout-table');
+    if (!tableBody) return;
+    
+    // Remove "No records" message if exists
+    if (tableBody.children.length === 1 && tableBody.children[0].innerText.includes('No login/logout records')) {
+        tableBody.innerHTML = '';
+    }
+    
+    const meta = log.metadata ? JSON.parse(log.metadata) : {};
+    const date = new Date(log.created_at);
+    const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
+                          ' ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    
+    let roleClass = '';
+    let roleText = log.actor_role;
+    if (log.actor_role === 'admin') roleClass = 'danger';
+    else if (log.actor_role === 'seller') roleClass = 'warning';
+    else roleClass = 'info';
+    
+    let details = '';
+    if (log.activity_type === 'login' && meta.email) {
+        details = `<i class="bi bi-envelope"></i> ${escapeHtml(meta.email)}`;
+    } else if (log.activity_type === 'register') {
+        details = `<i class="bi bi-person-plus"></i> New user: <strong>${escapeHtml(meta.name || '')}</strong><br>
+                   <small>Email: ${escapeHtml(meta.email || '')} | Role: ${escapeHtml(meta.role || '')}</small>`;
+    }
+    
+    const row = document.createElement('tr');
+    row.style.animation = 'highlight 2s ease-out';
+    row.innerHTML = `
+        <td><small>${formattedDate}</small></td>
+        <td><strong>${escapeHtml(log.actor_user_id)}</strong></td>
+        <td><span class="badge bg-${roleClass}">${escapeHtml(roleText).toUpperCase()}</span></td>
+        <td><span class="badge badge-${log.activity_type}">${escapeHtml(log.activity_type).toUpperCase()}</span></td>
+        <td>${details || '—'}</td>
+    `;
+    
+    tableBody.insertBefore(row, tableBody.firstChild);
+}
+
+// Function to add property logs to table
+function addPropertyLogToTable(log) {
+    const tableBody = document.querySelector('#property-crud-table');
+    if (!tableBody) return;
+    
+    if (tableBody.children.length === 1 && tableBody.children[0].innerText.includes('No property activity records')) {
+        tableBody.innerHTML = '';
+    }
+    
+    const meta = log.metadata ? JSON.parse(log.metadata) : {};
+    const date = new Date(log.created_at);
+    const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
+                          ' ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    
+    let title = '';
+    if (log.activity_type === 'create' || log.activity_type === 'delete' || log.activity_type === 'archive' || log.activity_type === 'unarchive') {
+        title = meta.title || 'N/A';
+    } else if (log.activity_type === 'update') {
+        title = meta.new?.title || meta.old?.title || 'N/A';
+    }
+    
+    let actionBadge = '';
+    if (log.activity_type === 'create') actionBadge = '<span class="badge badge-create"><i class="bi bi-plus-circle"></i> CREATE</span>';
+    else if (log.activity_type === 'update') actionBadge = '<span class="badge badge-update"><i class="bi bi-pencil-square"></i> UPDATE</span>';
+    else if (log.activity_type === 'delete') actionBadge = '<span class="badge badge-delete"><i class="bi bi-trash"></i> DELETE</span>';
+    else if (log.activity_type === 'archive') actionBadge = '<span class="badge badge-archive"><i class="bi bi-archive"></i> ARCHIVE</span>';
+    else if (log.activity_type === 'unarchive') actionBadge = '<span class="badge badge-unarchive"><i class="bi bi-arrow-repeat"></i> UNARCHIVE</span>';
+    
+    const row = document.createElement('tr');
+    row.style.animation = 'highlight 2s ease-out';
+    row.innerHTML = `
+        <td><small>${formattedDate}</small></td>
+        <td><strong>${escapeHtml(title)}</strong><br><small class="text-muted">ID: ${escapeHtml(log.entity_id)}</small></td>
+        <td>${actionBadge}</td>
+        <td><strong>${escapeHtml(log.actor_role)}</strong><br><small class="text-muted">ID: ${escapeHtml(log.actor_user_id)}</small></td>
+        <td style="max-width:400px;">${formatPropertyDetails(log, meta) || '—'}</td>
+    `;
+    
+    tableBody.insertBefore(row, tableBody.firstChild);
+}
+
+// Function to add property logs to table
+function addPropertyLogToTable(log) {
+    // Similar function for property CRUD logs
+    const tableBody = document.querySelector('#property-crud-table');
+    if (!tableBody) return;
+    
+    if (tableBody.children.length === 1 && tableBody.children[0].innerText.includes('No property activity records')) {
+        tableBody.innerHTML = '';
+    }
+    
+    const meta = log.metadata ? JSON.parse(log.metadata) : {};
+    const date = new Date(log.created_at);
+    const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
+                          ' ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    
+    let title = '';
+    if (log.activity_type === 'create' || log.activity_type === 'delete' || log.activity_type === 'archive' || log.activity_type === 'unarchive') {
+        title = meta.title || 'N/A';
+    } else if (log.activity_type === 'update') {
+        title = meta.new?.title || meta.old?.title || 'N/A';
+    }
+    
+    let actionBadge = '';
+    if (log.activity_type === 'create') actionBadge = '<span class="badge badge-create"><i class="bi bi-plus-circle"></i> CREATE</span>';
+    else if (log.activity_type === 'update') actionBadge = '<span class="badge badge-update"><i class="bi bi-pencil-square"></i> UPDATE</span>';
+    else if (log.activity_type === 'delete') actionBadge = '<span class="badge badge-delete"><i class="bi bi-trash"></i> DELETE</span>';
+    else if (log.activity_type === 'archive') actionBadge = '<span class="badge badge-archive"><i class="bi bi-archive"></i> ARCHIVE</span>';
+    else if (log.activity_type === 'unarchive') actionBadge = '<span class="badge badge-unarchive"><i class="bi bi-arrow-repeat"></i> UNARCHIVE</span>';
+    
+    const row = document.createElement('tr');
+    row.style.animation = 'highlight 2s ease-out';
+    row.innerHTML = `
+        <td><small>${formattedDate}</small></td>
+        <td><strong>${escapeHtml(title)}</strong><br><small class="text-muted">ID: ${escapeHtml(log.entity_id)}</small></td>
+        <td>${actionBadge}</td>
+        <td><strong>${escapeHtml(log.actor_role)}</strong><br><small class="text-muted">ID: ${escapeHtml(log.actor_user_id)}</small></td>
+        <td style="max-width:400px;">${formatPropertyDetails(log, meta)}</td>
+    `;
+    
+    tableBody.insertBefore(row, tableBody.firstChild);
+    updateRecordCount();
+}
+
+function formatPropertyDetails(log, meta) {
+    if (log.activity_type === 'create') {
+        return `<div class="text-success"><i class="bi bi-plus-circle"></i> Property created<br>📍 ${escapeHtml(meta.location || 'N/A')}<br>💰 ₱${(meta.price || 0).toLocaleString()}</div>`;
+    } else if (log.activity_type === 'update') {
+        let changes = '<div class="text-warning"><i class="bi bi-pencil-square"></i> Changes:<br>';
+        if (meta.old?.title && meta.old.title !== meta.new?.title) {
+            changes += `Title: <span class="old-value">${escapeHtml(meta.old.title)}</span> → <span class="new-value">${escapeHtml(meta.new.title)}</span><br>`;
+        }
+        if (meta.old?.price && meta.old.price !== meta.new?.price) {
+            changes += `Price: <span class="old-value">₱${(meta.old.price || 0).toLocaleString()}</span> → <span class="new-value">₱${(meta.new.price || 0).toLocaleString()}</span><br>`;
+        }
+        changes += '</div>';
+        return changes;
+    } else if (log.activity_type === 'delete') {
+        return `<div class="text-danger"><i class="bi bi-trash"></i> <strong>PROPERTY DELETED!</strong><br>📍 ${escapeHtml(meta.location || 'N/A')}<br>💰 ₱${(meta.price || 0).toLocaleString()}</div>`;
+    } else if (log.activity_type === 'archive') {
+        return `<div class="text-warning"><i class="bi bi-archive"></i> Property <strong>ARCHIVED</strong><br>📦 Hidden from buyers</div>`;
+    } else if (log.activity_type === 'unarchive') {
+        return `<div class="text-success"><i class="bi bi-arrow-repeat"></i> Property <strong>UNARCHIVED</strong><br>✅ Visible to buyers again</div>`;
+    }
+    return '';
+}
+
+function showNotification(log) {
+    // Create a toast notification
+    const notification = document.createElement('div');
+    notification.className = `alert alert-info position-fixed top-0 end-0 m-3`;
+    notification.style.cssText = 'z-index: 9999; animation: slideIn 0.3s ease-out; background: #17a2b8; color: white;';
+    
+    let message = '';
+    if (log.activity_type === 'login') {
+        const meta = JSON.parse(log.metadata || '{}');
+        message = `🔐 User ${log.actor_role} logged in (ID: ${log.actor_user_id})`;
+        if (meta.email) message += ` - ${meta.email}`;
+    } else if (log.activity_type === 'logout') {
+        message = `🚪 User ${log.actor_role} logged out (ID: ${log.actor_user_id})`;
+    } else if (log.activity_type === 'register') {
+        const meta = JSON.parse(log.metadata || '{}');
+        message = `📝 New user registered: ${meta.name || ''} (${meta.email || ''})`;
+    }
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="bi bi-bell-fill me-2"></i>
+            <div>${escapeHtml(message)}</div>
+            <button type="button" class="btn-close btn-close-white ms-3" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 4000);
+}
+
+function updateRecordCount() {
+    // Update the total count display
+    const loginRows = document.querySelectorAll('#login-logout-table tbody tr');
+    const totalSpan = document.querySelector('.total-records');
+    if (totalSpan && loginRows.length) {
+        totalSpan.innerText = loginRows.length;
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Add animation styles
+if (!document.querySelector('#audit-styles')) {
+    const style = document.createElement('style');
+    style.id = 'audit-styles';
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes highlight {
+            0% { background-color: rgba(40, 167, 69, 0.3); }
+            100% { background-color: transparent; }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+console.log('Real-time audit monitoring active');
+</script>
 </body>
 </html>

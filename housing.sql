@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 27, 2026 at 01:16 PM
+-- Generation Time: May 28, 2026 at 06:42 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.1.25
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -35,6 +35,7 @@ CREATE TABLE `audit_logs` (
   `entity_type` varchar(50) DEFAULT NULL,
   `entity_id` int(11) DEFAULT NULL,
   `metadata` text DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
@@ -42,12 +43,123 @@ CREATE TABLE `audit_logs` (
 -- Dumping data for table `audit_logs`
 --
 
-INSERT INTO `audit_logs` (`id`, `actor_user_id`, `actor_role`, `activity_type`, `entity_type`, `entity_id`, `metadata`, `created_at`) VALUES
-(1, 159, 'admin', 'login', NULL, NULL, '{\"email\":\"admin@example.com\"}', '2026-05-27 06:33:55'),
-(2, 159, 'admin', 'logout', NULL, NULL, '[]', '2026-05-27 06:37:44'),
-(3, 3, 'seller', 'login', NULL, NULL, '{\"email\":\"jeycel@gmail.com\"}', '2026-05-27 06:37:53'),
-(4, 3, 'seller', 'logout', NULL, NULL, '[]', '2026-05-27 06:38:00'),
-(5, 159, 'admin', 'login', NULL, NULL, '{\"email\":\"admin@example.com\"}', '2026-05-27 06:38:12');
+INSERT INTO `audit_logs` (`id`, `actor_user_id`, `actor_role`, `activity_type`, `entity_type`, `entity_id`, `metadata`, `ip_address`, `created_at`) VALUES
+(1, 159, 'admin', 'logout', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-27 13:53:09'),
+(2, 159, 'admin', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 13:56:04'),
+(3, 159, 'admin', 'login', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-27 13:56:04'),
+(4, 159, 'admin', 'logout', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-27 14:22:38'),
+(5, 0, 'guest', 'register', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-27 14:24:56'),
+(6, 160, 'seller', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 14:25:06'),
+(7, 160, 'seller', 'login', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-27 14:25:06'),
+(8, 160, 'seller', 'logout', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-27 14:25:15'),
+(9, 159, 'admin', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 14:25:31'),
+(10, 159, 'admin', 'login', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-27 14:25:31'),
+(11, 0, 'guest', 'register', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-27 14:48:36'),
+(12, 161, 'buyer', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 14:49:00'),
+(13, 161, 'buyer', 'login', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-27 14:49:00'),
+(14, 161, 'buyer', 'logout', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-27 14:49:27'),
+(15, 160, 'seller', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 14:49:47'),
+(16, 160, 'seller', 'login', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-27 14:49:47'),
+(17, 160, 'seller', 'create', 'property', 20, '{\"title\":\"Duplex House\",\"price\":\"16000000\",\"location\":\"Cogon, Ormoc City\",\"source\":\"seller\"}', '::1', '2026-05-27 14:56:03'),
+(18, 160, 'seller', 'archive', 'property', 19, '{\"title\":\"Modern House\",\"price\":\"13000000.00\",\"location\":\"Tacloban, City\",\"source\":\"seller\"}', '::1', '2026-05-27 15:05:33'),
+(19, 160, 'seller', 'archive', 'property', 19, '{\"title\":\"Modern House\",\"price\":\"13000000.00\",\"location\":\"Tacloban, City\",\"source\":\"seller\"}', '::1', '2026-05-27 15:11:03'),
+(20, 160, 'seller', 'unarchive', 'property', 19, '{\"title\":\"Modern House\",\"price\":\"13000000.00\",\"location\":\"Tacloban, City\",\"is_archived\":0,\"source\":\"seller\"}', '::1', '2026-05-27 15:11:12'),
+(21, 159, 'admin', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 15:51:03'),
+(22, 159, 'admin', 'login', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-27 15:51:03'),
+(23, 160, 'seller', 'logout', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-27 15:51:27'),
+(24, 160, 'seller', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 16:01:32'),
+(25, 160, 'seller', 'login', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-27 16:01:32'),
+(26, 159, 'admin', 'logout', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-27 16:01:54'),
+(27, 160, 'seller', 'logout', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-27 16:02:01'),
+(28, 159, 'admin', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 22:58:48'),
+(29, 159, 'admin', 'login', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-27 22:58:48'),
+(30, 161, 'buyer', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 23:11:24'),
+(31, 161, 'buyer', 'login', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-27 23:11:24'),
+(32, 161, 'buyer', 'logout', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-27 23:11:39'),
+(33, 161, 'buyer', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 23:15:14'),
+(34, 161, 'buyer', 'login', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-27 23:15:14'),
+(35, 161, 'buyer', 'logout', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-27 23:15:27'),
+(36, 160, 'seller', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 23:16:49'),
+(37, 160, 'seller', 'login', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-27 23:16:49'),
+(38, 160, 'seller', 'update', 'property', 19, '{\"old\":{\"title\":\"Modern House\",\"price\":\"13000000.00\",\"location\":\"Tacloban, City\"},\"new\":{\"title\":\"Modern House\",\"price\":\"13000000.00\",\"location\":\"Tacloban, City\"},\"source\":\"seller\"}', '::1', '2026-05-27 23:17:19'),
+(39, 160, 'seller', 'logout', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-27 23:33:20'),
+(40, 161, 'buyer', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-27 23:33:33'),
+(41, 161, 'buyer', 'login', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-27 23:33:33'),
+(42, 159, 'admin', 'delete', 'property', 20, '{\"title\":\"Duplex House\",\"price\":\"16000000.00\",\"location\":\"Cogon, Ormoc City\",\"seller_id\":\"160\"}', '::1', '2026-05-28 01:29:47'),
+(43, 161, 'buyer', 'logout', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-28 01:33:04'),
+(44, 159, 'admin', 'logout', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-28 01:33:11'),
+(45, 159, 'admin', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 01:33:49'),
+(46, 159, 'admin', 'login', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-28 01:33:49'),
+(47, 160, 'seller', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 01:34:11'),
+(48, 160, 'seller', 'login', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-28 01:34:11'),
+(49, 161, 'buyer', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 01:34:26'),
+(50, 161, 'buyer', 'login', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-28 01:34:26'),
+(51, 160, 'seller', 'create', 'property', 21, '{\"title\":\"Crystal Manor\",\"price\":\"56000000\",\"location\":\"Sunflower Subdivision Tacloban City, Leyte\",\"source\":\"seller\"}', '::1', '2026-05-28 02:51:23'),
+(52, 160, 'seller', 'create', 'property', 22, '{\"title\":\"Crystal Manor\",\"price\":\"56000000\",\"location\":\"Sunflower Subdivision Tacloban City, Leyte\",\"source\":\"seller\"}', '::1', '2026-05-28 02:51:23'),
+(53, 160, 'seller', 'archive', 'property', 22, '{\"title\":\"Crystal Manor\",\"price\":\"56000000.00\",\"location\":\"Sunflower Subdivision Tacloban City, Leyte\",\"source\":\"seller\"}', '::1', '2026-05-28 02:52:38'),
+(54, 160, 'seller', 'update', 'property', 21, '{\"old\":{\"title\":\"Crystal Manor\",\"price\":\"56000000.00\",\"location\":\"Sunflower Subdivision Tacloban City, Leyte\"},\"new\":{\"title\":\"Crystal Manor\",\"price\":\"56000000.00\",\"location\":\"Sunflower Subdivision Tacloban City, Leyte\"},\"source\":\"seller\"}', '::1', '2026-05-28 02:53:29'),
+(55, 160, 'seller', 'create', 'property', 23, '{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\",\"source\":\"seller\"}', '::1', '2026-05-28 03:03:22'),
+(56, 160, 'seller', 'update', 'property', 23, '{\"old\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"new\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"source\":\"seller\"}', '::1', '2026-05-28 03:15:08'),
+(57, 160, 'seller', 'update', 'property', 23, '{\"old\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"new\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"source\":\"seller\"}', '::1', '2026-05-28 03:15:08'),
+(58, 160, 'seller', 'update', 'property', 23, '{\"old\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"new\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"source\":\"seller\"}', '::1', '2026-05-28 03:15:09'),
+(59, 160, 'seller', 'update', 'property', 23, '{\"old\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"new\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"source\":\"seller\"}', '::1', '2026-05-28 03:27:51'),
+(60, 160, 'seller', 'update', 'property', 23, '{\"old\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"new\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"source\":\"seller\"}', '::1', '2026-05-28 03:27:52'),
+(61, 160, 'seller', 'update', 'property', 23, '{\"old\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"new\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"source\":\"seller\"}', '::1', '2026-05-28 03:40:27'),
+(62, 160, 'seller', 'update', 'property', 23, '{\"old\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"new\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"source\":\"seller\"}', '::1', '2026-05-28 03:44:22'),
+(63, 160, 'seller', 'update', 'property', 23, '{\"old\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"new\":{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\"},\"source\":\"seller\"}', '::1', '2026-05-28 04:24:59'),
+(64, 160, 'seller', 'archive', 'property', 23, '{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\",\"source\":\"seller\"}', '::1', '2026-05-28 04:26:13'),
+(65, 159, 'admin', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 04:26:32'),
+(66, 159, 'admin', 'login', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-28 04:26:32'),
+(67, 159, 'admin', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 04:26:32'),
+(68, 159, 'admin', 'login', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-28 04:26:32'),
+(69, 160, 'seller', 'unarchive', 'property', 23, '{\"title\":\"Small House\",\"price\":\"33999999.99\",\"location\":\"San Miguel Palompon, Leyte\",\"is_archived\":0,\"source\":\"seller\"}', '::1', '2026-05-28 04:26:54'),
+(70, 160, 'seller', 'create', 'property', 24, '{\"title\":\"Seaside House\",\"price\":\"45000000\",\"location\":\"San Juan Palonpon, Leyte\",\"source\":\"seller\"}', '::1', '2026-05-28 05:18:16'),
+(71, 161, 'buyer', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 05:39:20'),
+(72, 161, 'buyer', 'login', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-28 05:39:20'),
+(73, 160, 'seller', 'logout', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-28 05:39:42'),
+(74, 161, 'buyer', 'logout', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-28 05:39:55'),
+(75, 159, 'admin', 'logout', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-28 05:40:02'),
+(76, 160, 'seller', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 12:31:10'),
+(77, 160, 'seller', 'login', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-28 12:31:10'),
+(78, 161, 'buyer', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 12:32:31'),
+(79, 161, 'buyer', 'login', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-28 12:32:31'),
+(80, 160, 'seller', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 12:42:40'),
+(81, 160, 'seller', 'login', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-28 12:42:40'),
+(82, 160, 'seller', 'logout', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-28 12:47:53'),
+(83, 161, 'buyer', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 12:48:05'),
+(84, 161, 'buyer', 'login', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-28 12:48:05'),
+(85, 160, 'seller', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 12:58:43'),
+(86, 160, 'seller', 'login', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-28 12:58:43'),
+(87, 160, 'seller', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 12:58:43'),
+(88, 160, 'seller', 'login', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-28 12:58:43'),
+(89, 160, 'seller', 'logout', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-28 13:02:36'),
+(90, 160, 'seller', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 13:03:03'),
+(91, 160, 'seller', 'login', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-28 13:03:03'),
+(92, 161, 'buyer', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 13:03:35'),
+(93, 161, 'buyer', 'login', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-28 13:03:35'),
+(94, 160, 'seller', 'create', 'property', 25, '{\"title\":\"gfh\",\"price\":\"60000000\",\"location\":\"Palompon, Leyte\",\"source\":\"seller\"}', '::1', '2026-05-28 13:34:03'),
+(95, 160, 'seller', 'create', 'property', 26, '{\"title\":\"grg\",\"price\":\"57000000\",\"location\":\"Ormoc City\",\"source\":\"seller\"}', '::1', '2026-05-28 13:50:35'),
+(96, 160, 'seller', 'create', 'property', 27, '{\"title\":\"rgz\",\"price\":\"79000000\",\"location\":\"Tacloban City\",\"source\":\"seller\"}', '::1', '2026-05-28 13:51:39'),
+(97, 160, 'seller', 'create', 'property', 28, '{\"title\":\"hsbs\",\"price\":\"68000000\",\"location\":\"Ormoc City\",\"source\":\"seller\"}', '::1', '2026-05-28 15:11:41'),
+(98, 160, 'seller', 'create', 'property', 29, '{\"title\":\"rga\",\"price\":\"4800000\",\"location\":\"Ormoc City\",\"source\":\"seller\"}', '::1', '2026-05-28 15:28:01'),
+(99, 160, 'seller', 'create', 'property', 30, '{\"title\":\"thz\",\"price\":\"6700000\",\"location\":\"Ormoc City\",\"source\":\"seller\"}', '::1', '2026-05-28 15:37:36'),
+(100, 160, 'seller', 'create', 'property', 31, '{\"title\":\"gaf\",\"price\":\"34000000\",\"location\":\"Palompon, Leyte\",\"source\":\"seller\"}', '::1', '2026-05-28 15:38:21'),
+(101, 160, 'seller', 'update', 'property', 31, '{\"old\":{\"title\":\"gaf\",\"price\":\"34000000.00\",\"location\":\"Palompon, Leyte\"},\"new\":{\"title\":\"gaf\",\"price\":\"34000000.00\",\"location\":\"Palompon, Leyte\"},\"source\":\"seller\"}', '::1', '2026-05-28 15:38:37'),
+(102, 160, 'seller', 'update', 'property', 31, '{\"old\":{\"title\":\"gaf\",\"price\":\"34000000.00\",\"location\":\"Palompon, Leyte\"},\"new\":{\"title\":\"gaf\",\"price\":\"34000000.00\",\"location\":\"Palompon, Leyte\"},\"source\":\"seller\"}', '::1', '2026-05-28 15:38:37'),
+(103, 159, 'admin', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 16:16:02'),
+(104, 159, 'admin', 'login', 'user', 159, '{\"email\":\"admin@example.com\",\"name\":\"Dev Admin\",\"role\":\"admin\"}', '::1', '2026-05-28 16:16:02'),
+(105, 160, 'seller', 'create', 'property', 32, '{\"title\":\"thx\",\"price\":\"34999999.99\",\"location\":\"Tacloban, City\",\"source\":\"seller\"}', '::1', '2026-05-28 16:17:22'),
+(106, 160, 'seller', 'archive', 'property', 29, '{\"title\":\"rga\",\"price\":\"4800000.00\",\"location\":\"Ormoc City\",\"source\":\"seller\"}', '::1', '2026-05-28 16:26:22'),
+(107, 160, 'seller', 'delete', 'property', 29, '{\"title\":\"rga\",\"price\":\"4800000.00\",\"location\":\"Ormoc City\",\"source\":\"seller\"}', '::1', '2026-05-28 16:26:54'),
+(108, 160, 'seller', 'unarchive', 'property', 22, '{\"title\":\"Crystal Manor\",\"price\":\"56000000.00\",\"location\":\"Sunflower Subdivision Tacloban City, Leyte\",\"is_archived\":0,\"source\":\"seller\"}', '::1', '2026-05-28 16:27:07'),
+(109, 160, 'seller', 'create', 'property', 33, '{\"title\":\"tttt\",\"price\":\"3799999.99\",\"location\":\"Palompon, Leyte\",\"source\":\"seller\"}', '::1', '2026-05-28 16:29:51'),
+(110, 160, 'seller', 'archive', 'property', 33, '{\"title\":\"tttt\",\"price\":\"3799999.99\",\"location\":\"Palompon, Leyte\",\"source\":\"seller\"}', '::1', '2026-05-28 16:30:41'),
+(111, 160, 'seller', 'archive', 'property', 33, '{\"title\":\"tttt\",\"price\":\"3799999.99\",\"location\":\"Palompon, Leyte\",\"source\":\"seller\"}', '::1', '2026-05-28 16:30:41'),
+(112, 160, 'seller', 'unarchive', 'property', 33, '{\"title\":\"tttt\",\"price\":\"3799999.99\",\"location\":\"Palompon, Leyte\",\"is_archived\":0,\"source\":\"seller\"}', '::1', '2026-05-28 16:30:48'),
+(113, 160, 'seller', 'logout', 'user', 160, '{\"email\":\"davidcaudillo@gmail.com\",\"name\":\"David N. Caudillo\",\"role\":\"seller\"}', '::1', '2026-05-28 16:32:24'),
+(114, 161, 'buyer', 'logout', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-28 16:32:30'),
+(115, 161, 'buyer', 'direct_test', NULL, NULL, NULL, NULL, '2026-05-28 16:36:24'),
+(116, 161, 'buyer', 'login', 'user', 161, '{\"email\":\"josephfisk@gmail.com\",\"name\":\"Joseph M. Fisk\",\"role\":\"buyer\"}', '::1', '2026-05-28 16:36:24');
 
 -- --------------------------------------------------------
 
@@ -92,7 +204,9 @@ INSERT INTO `messages` (`id`, `sender_id`, `receiver_id`, `property_id`, `messag
 (15, 4, 6, 15, 'hii can i buy this?', '2025-11-22 06:38:02'),
 (16, 6, 4, 15, 'of course ', '2025-11-22 06:41:58'),
 (17, 4, 8, 18, 'ka gwapo ba ana miss', '2025-11-24 18:50:02'),
-(18, 4, 8, 18, 'ka gwapo ba ana miss', '2025-11-24 18:50:03');
+(18, 4, 8, 18, 'ka gwapo ba ana miss', '2025-11-24 18:50:03'),
+(19, 161, 160, 32, 'Hi I would like to ask a few questions about this house.', '2026-05-28 08:24:30'),
+(20, 160, 161, 32, 'Good morning ma\'am, What are your questions about this house?', '2026-05-28 08:25:17');
 
 -- --------------------------------------------------------
 
@@ -130,16 +244,28 @@ CREATE TABLE `offers` (
   `property_id` int(11) DEFAULT NULL,
   `buyer_id` int(11) DEFAULT NULL,
   `amount` decimal(10,2) DEFAULT NULL,
-  `status` enum('pending','accepted','rejected') DEFAULT 'pending'
+  `status` enum('pending','accepted','rejected') DEFAULT 'pending',
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `offers`
 --
 
-INSERT INTO `offers` (`id`, `property_id`, `buyer_id`, `amount`, `status`) VALUES
-(5, 15, 4, 50000000.00, 'accepted'),
-(6, 18, 4, 6000000.00, 'rejected');
+INSERT INTO `offers` (`id`, `property_id`, `buyer_id`, `amount`, `status`, `created_at`) VALUES
+(5, 15, 4, 50000000.00, 'accepted', '2026-05-28 07:34:55'),
+(6, 18, 4, 6000000.00, 'rejected', '2026-05-28 07:34:55'),
+(8, 18, 161, 7000000.00, 'pending', '2026-05-28 07:48:00'),
+(9, 14, 161, 8000000.00, 'pending', '2026-05-28 07:48:44'),
+(10, 19, 161, 10000000.00, 'rejected', '2026-05-28 09:34:58'),
+(11, 23, 161, 15000000.00, 'rejected', '2026-05-28 12:27:28'),
+(12, 21, 161, 50000000.00, 'rejected', '2026-05-28 12:28:15'),
+(13, 24, 161, 40000000.00, 'rejected', '2026-05-28 21:17:04'),
+(14, 25, 161, 50000000.00, 'rejected', '2026-05-28 21:34:42'),
+(15, 26, 161, 50000000.00, 'accepted', '2026-05-28 21:51:12'),
+(16, 27, 161, 68000000.00, 'rejected', '2026-05-28 21:51:55'),
+(17, 32, 161, 68000000.00, 'accepted', '2026-05-29 00:22:47'),
+(18, 31, 161, 32500000.00, 'rejected', '2026-05-29 00:23:10');
 
 -- --------------------------------------------------------
 
@@ -186,7 +312,39 @@ INSERT INTO `properties` (`id`, `seller_id`, `title`, `description`, `price`, `l
 (14, 6, 'Luxury House', 'Garage ni Boss K', 10000000.00, 'Albuera, Damulaan', 0, 'uploads/1759846048_house7.jpg'),
 (15, 6, 'City House', 'Murag balay sa Larva', 40000000.00, 'Ormoc City ', 0, 'uploads/1759846310_house9.jpg'),
 (17, 3, 'Guba nga balay', 'naguba sa baha', 40000.00, 'Ormoc City, Tambulilid', 1, 'writable/uploads/1763821172_210d58fb9e254353b190.jpg'),
-(18, 8, 'Eskwa House', 'secret nga naay ungo', 5000000.00, 'Ormoc City, Curva', 0, 'uploads/1764038564_903dc7adc68a804699a3.jpeg');
+(18, 8, 'Eskwa House', 'secret nga naay ungo', 5000000.00, 'Ormoc City, Curva', 0, 'uploads/1764038564_903dc7adc68a804699a3.jpeg'),
+(19, 160, 'Modern House', 'Near School, Near the mall', 13000000.00, 'Tacloban, City', 0, 'uploads/1779893446_e51658402d16ff1d73be.jpg'),
+(21, 160, 'Crystal Manor', 'This magnificent mansion-inspired villa showcases timeless architecture, elegant stone finishes, and grand castle-like design elements that create a truly luxurious atmosphere. Featuring multiple spacious bedrooms, sophisticated living areas, high ceilings, and expansive windows, the property combines classic elegance with modern comfort. The estate includes beautifully maintained grounds, a grand entrance, private parking spaces, and breathtaking exterior details that reflect prestige and exclusivity. Perfect for luxury living, private retreats, or high-end investment opportunities, this extraordinary residence offers unmatched charm, sophistication, and architectural beauty.', 56000000.00, 'Sunflower Subdivision Tacloban City, Leyte', 0, 'uploads/1779936809_78d243bb3d80651ba07c.jpeg'),
+(22, 160, 'Crystal Manor', 'This magnificent mansion-inspired villa showcases timeless architecture, elegant stone finishes, and grand castle-like design elements that create a truly luxurious atmosphere. Featuring multiple spacious bedrooms, sophisticated living areas, high ceilings, and expansive windows, the property combines classic elegance with modern comfort. The estate includes beautifully maintained grounds, a grand entrance, private parking spaces, and breathtaking exterior details that reflect prestige and exclusivity. Perfect for luxury living, private retreats, or high-end investment opportunities, this extraordinary residence offers unmatched charm, sophistication, and architectural beauty.', 56000000.00, 'Sunflower Subdivision Tacloban City, Leyte', 0, 'uploads/1779936682_54ca887ccbd24f2ee3b6.jpg'),
+(23, 160, 'Small House', 'This charming small house offers a cozy and comfortable living space perfect for small families, couples, or first-time homeowners. Designed with simplicity and functionality in mind, the home features a bright living area, a practical kitchen, comfortable bedrooms, and excellent natural ventilation. The property provides a peaceful atmosphere while remaining conveniently located near schools, markets, and public transportation. With its efficient layout and low-maintenance design, this home is ideal for those seeking affordable yet comfortable living.', 33999999.99, 'San Miguel Palompon, Leyte', 0, 'uploads/1779942299_1285495baa7c4237329e.webp'),
+(24, 160, 'Seaside House', 'Seaside house', 45000000.00, 'San Juan Palonpon, Leyte', 0, 'uploads/1779945496_560f1114a3d3afae423d.avif'),
+(25, 160, 'gfh', 'fgz', 60000000.00, 'Palompon, Leyte', 0, 'uploads/1779975243_86ad022e9eccb9e5e094.png'),
+(26, 160, 'grg', 'gds', 57000000.00, 'Ormoc City', 0, 'uploads/1779976235_b26ccf825da2ea05d7e7.webp'),
+(27, 160, 'rgz', 'ssv', 79000000.00, 'Tacloban City', 0, 'uploads/1779976299_ff5533d2e81cdc1570fe.jpg'),
+(28, 160, 'hsbs', 'rsffv', 68000000.00, 'Ormoc City', 0, 'uploads/1779981101_87c0a69404e048c8bb97.jpg'),
+(30, 160, 'thz', 'ewsssr', 6700000.00, 'Ormoc City', 0, 'uploads/1779982656_d5bc185bef0ba672bb4e.jpg'),
+(31, 160, 'gaf', 'rww', 34000000.00, 'Palompon, Leyte', 0, 'uploads/1779982717_dc0eec0083168471b511.jpg'),
+(32, 160, 'thx', 'yrbdhg', 34999999.99, 'Tacloban, City', 0, 'uploads/1779985042_621e0975cfbd30047e0a.jpg'),
+(33, 160, 'tttt', 'erexc', 3799999.99, 'Palompon, Leyte', 0, 'uploads/1779985791_518575b93869474d3a89.avif');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `property_history`
+--
+
+CREATE TABLE `property_history` (
+  `id` int(11) NOT NULL,
+  `property_id` int(11) NOT NULL,
+  `property_title` varchar(255) NOT NULL,
+  `action` varchar(50) NOT NULL,
+  `changed_by` varchar(100) NOT NULL,
+  `changed_by_id` int(11) NOT NULL,
+  `changed_by_role` varchar(50) NOT NULL,
+  `old_values` text DEFAULT NULL,
+  `new_values` text DEFAULT NULL,
+  `created_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -367,7 +525,9 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `contact`, `bio`
 (156, 'Gabriella Hernandez', 'gabriella.hernandez47@gmail.com', '$2y$10$ZnugIzcNNtevkDorf2xz1e.U7m4mrLl5UxASifwDwcoqRFeW6yfd.', 'seller', '09268398433', 'Reliable seller of residential real estate.', 'default.png'),
 (157, 'Anna Santos', 'anna.santos77@gmail.com', '$2y$10$ZnugIzcNNtevkDorf2xz1e.U7m4mrLl5UxASifwDwcoqRFeW6yfd.', 'seller', '09845898385', 'Selling prime location properties.', 'default.png'),
 (158, 'Amanda Morales', 'amanda.morales67@gmail.com', '$2y$10$ZnugIzcNNtevkDorf2xz1e.U7m4mrLl5UxASifwDwcoqRFeW6yfd.', 'seller', '09277334037', 'Offering well-maintained properties.', 'default.png'),
-(159, 'Dev Admin', 'admin@example.com', '$2y$10$c7kCLpQfpxJLYwDYZrdfgu0s/v46R.3skckfkGC.UxXlTzg7UCO2a', 'admin', NULL, NULL, NULL);
+(159, 'Dev Admin', 'admin@example.com', '$2y$10$c7kCLpQfpxJLYwDYZrdfgu0s/v46R.3skckfkGC.UxXlTzg7UCO2a', 'admin', NULL, NULL, NULL),
+(160, 'David N. Caudillo', 'davidcaudillo@gmail.com', '$2y$10$z6kr1Vp4.0DZnwrqsPc3Dexbiyalmxvp3qOvGenHEA86Nhi5UgcRu', 'seller', '09713736272', 'Sporty', '1779891896_dea0093bbba8b5a70608.webp'),
+(161, 'Joseph M. Fisk', 'josephfisk@gmail.com', '$2y$10$JMAyyJKwDBLOh1ocT5HxpuBMpUK/w5ntadg/uB4gYY0G.DcvqNNvm', 'buyer', '09636230608', 'Likes to hike', '1779893316_1d89599684ed4c88adc4.webp');
 
 --
 -- Indexes for dumped tables
@@ -427,6 +587,15 @@ ALTER TABLE `properties`
   ADD KEY `seller_id` (`seller_id`);
 
 --
+-- Indexes for table `property_history`
+--
+ALTER TABLE `property_history`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_property_id` (`property_id`),
+  ADD KEY `idx_action` (`action`),
+  ADD KEY `idx_created_at` (`created_at`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -441,7 +610,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=117;
 
 --
 -- AUTO_INCREMENT for table `favorites`
@@ -453,7 +622,7 @@ ALTER TABLE `favorites`
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `migrations`
@@ -465,7 +634,7 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `offers`
 --
 ALTER TABLE `offers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -477,13 +646,19 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `properties`
 --
 ALTER TABLE `properties`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+
+--
+-- AUTO_INCREMENT for table `property_history`
+--
+ALTER TABLE `property_history`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=160;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=162;
 
 --
 -- Constraints for dumped tables

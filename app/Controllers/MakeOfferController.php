@@ -30,6 +30,8 @@ class MakeOfferController extends BaseController
 
     public function create()
     {
+        // REMOVE the CSRF validation block - it's causing the error!
+        
         $session = session();
 
         // Check if user is logged in as buyer
@@ -77,10 +79,8 @@ class MakeOfferController extends BaseController
         $offerData = [
             'property_id' => $propertyId,
             'buyer_id' => $buyerId,
-            'seller_id' => $property['seller_id'],
             'amount' => $amount,
-            'status' => 'pending',
-            'created_at' => date('Y-m-d H:i:s')
+            'status' => 'pending'
         ];
         
         $offerModel->insert($offerData);

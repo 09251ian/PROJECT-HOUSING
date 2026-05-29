@@ -82,7 +82,7 @@ $user = $user ?? session()->get('user') ?? [];
           </div>
         </div>
 
-        <form method="post" action="<?= base_url('/seller/add_property') ?>" enctype="multipart/form-data" class="row g-3">
+        <form method="post" action="<?= base_url('seller/add_property') ?>" enctype="multipart/form-data" class="row g-3">
           <?= csrf_field() ?>
           <div class="col-12">
             <label class="form-label">Property Title</label>
@@ -190,7 +190,7 @@ $user = $user ?? session()->get('user') ?? [];
                   </div>
 
                   <div class="mb-3">
-                    <div class="text-muted small fw-bold mb-2">Offers</div>
+                    <div class="text-white small fw-bold mb-2">Offers</div>
                     <div class="offers-container">
                       <?php $offers = $offersData[$property['id']] ?? []; ?>
                       <?php if (!empty($offers)): ?>
@@ -217,7 +217,7 @@ $user = $user ?? session()->get('user') ?? [];
 
                               <?php if (($offer['status'] ?? '') === 'pending'): ?>
                                 <div class="d-flex gap-2 mt-2">
-                                  <form method="post" action="<?= base_url('/seller/offer_action') ?>" class="m-0 flex-fill">
+                                  <form method="post" action="<?= base_url('seller/offer_action') ?>" class="m-0 flex-fill">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="offer_id" value="<?= (int)$offer['id'] ?>">
                                     <input type="hidden" name="action" value="accept">
@@ -225,7 +225,7 @@ $user = $user ?? session()->get('user') ?? [];
                                       <i class="bi bi-check2-circle me-1"></i>Accept
                                     </button>
                                   </form>
-                                  <form method="post" action="<?= base_url('/seller/offer_action') ?>" class="m-0 flex-fill">
+                                  <form method="post" action="<?= base_url('seller/offer_action') ?>" class="m-0 flex-fill">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="offer_id" value="<?= (int)$offer['id'] ?>">
                                     <input type="hidden" name="action" value="reject">
@@ -248,13 +248,13 @@ $user = $user ?? session()->get('user') ?? [];
                           <?php endforeach; ?>
                         </div>
                       <?php else: ?>
-                        <div class="text-muted small">No offers yet.</div>
+                        <div class="text-white small">No offers yet.</div>
                       <?php endif; ?>
                     </div>
                   </div>
 
                   <div>
-                    <div class="text-muted small fw-bold mb-2">Active Chats</div>
+                    <div class="text-white small fw-bold mb-2">Active Chats</div>
                     <?php $chats = $chatsData[$property['id']] ?? []; ?>
                     <?php if (!empty($chats)): ?>
                       <div class="d-grid gap-2">
@@ -265,7 +265,7 @@ $user = $user ?? session()->get('user') ?? [];
                         <?php endforeach; ?>
                       </div>
                     <?php else: ?>
-                      <div class="text-muted small">No chats yet for this property.</div>
+                      <div class="text-white small">No chats yet for this property.</div>
                     <?php endif; ?>
                   </div>
 
@@ -427,10 +427,9 @@ socket.on('property-added', function(property) {
 // Function to add property to seller dashboard without refresh
 function addPropertyToDashboard(property) {
     const propertiesContainer = document.getElementById('properties-container');
-    if (!propertiesContainer) {
-        console.error('Properties container not found');
-        return;
-    }
+    if (!propertiesContainer) return;
+    
+    const baseUrl = '<?= base_url() ?>';
     
     let imagePath = 'https://via.placeholder.com/800x500?text=No+Image';
     if (property.image_path && property.image_path !== 'null') {
@@ -455,25 +454,18 @@ function addPropertyToDashboard(property) {
                     </div>
                     <p class="property-desc mb-3">${escapeHtml(property.description ? property.description.substring(0, 100) : '')}</p>
                     <div class="d-flex gap-2 flex-wrap mb-3">
-                        <a href="/seller/edit_property/${property.id}" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-pencil-square me-1"></i>Edit
-                        </a>
+                        <a href="/seller/edit_property/${property.id}" class="btn btn-outline-primary btn-sm">Edit</a>
                         <form method="post" action="/seller/archive" class="m-0">
                             <input type="hidden" name="property_id" value="${property.id}">
-                            <button type="submit" class="btn btn-warning btn-sm">
-                                <i class="bi bi-archive me-1"></i>Archive
-                            </button>
+                            <button type="submit" class="btn btn-warning btn-sm">Archive</button>
                         </form>
                     </div>
                     <div class="mb-3">
-                        <div class="text-muted small fw-bold mb-2">Offers</div>
                         <div class="offers-container">
-                            <div class="text-muted small">No offers yet.</div>
+                            <div class="text-white small">No offers yet.</div>
                         </div>
                     </div>
-                    <div class="alert alert-success mt-3 mb-0 small">
-                        🎉 New property added by admin!
-                    </div>
+                    <div class="alert alert-success mt-3 mb-0 small">🎉 New property added by admin!</div>
                 </div>
             </div>
         </div>
@@ -486,11 +478,7 @@ function addPropertyToDashboard(property) {
     if (newProperty) {
         newProperty.style.transition = 'background-color 0.5s';
         newProperty.style.backgroundColor = '#2a5a2a';
-        setTimeout(() => {
-            newProperty.style.backgroundColor = '';
-        }, 3000);
-        
-        // Scroll to show the new property
+        setTimeout(() => newProperty.style.backgroundColor = '', 3000);
         newProperty.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
@@ -582,20 +570,16 @@ socket.on('new-offer', function(data) {
                             <span class="property-pill property-pill--warning">Pending</span>
                         </div>
                         <div class="d-flex gap-2 mt-2">
-                            <form method="post" action="/seller/offer_action" class="m-0 flex-fill">
-                                <input type="hidden" name="offer_id" value="${data.id}">
-                                <input type="hidden" name="action" value="accept">
-                                <button type="submit" class="btn btn-success btn-sm w-100">
-                                    <i class="bi bi-check2-circle me-1"></i>Accept
-                                </button>
-                            </form>
-                            <form method="post" action="/seller/offer_action" class="m-0 flex-fill">
-                                <input type="hidden" name="offer_id" value="${data.id}">
-                                <input type="hidden" name="action" value="reject">
-                                <button type="submit" class="btn btn-danger btn-sm w-100">
-                                    <i class="bi bi-x-circle me-1"></i>Reject
-                                </button>
-                            </form>
+                          <form method="post" action="<?= base_url('seller/offer_action') ?>" class="m-0 flex-fill">
+                            <input type="hidden" name="offer_id" value="${data.id}">
+                            <input type="hidden" name="action" value="accept">
+                            <button type="submit" class="btn btn-success btn-sm w-100">Accept</button>
+                          </form>
+                          <form method="post" action="<?= base_url('seller/offer_action') ?>" class="m-0 flex-fill">
+                            <input type="hidden" name="offer_id" value="${data.id}">
+                            <input type="hidden" name="action" value="reject">
+                            <button type="submit" class="btn btn-danger btn-sm w-100">Reject</button>
+                          </form>
                         </div>
                         <div class="d-flex gap-2 flex-wrap mt-2">
                             <a href="/message/${data.buyer_id}/${data.property_id}" class="btn btn-outline-primary btn-sm">

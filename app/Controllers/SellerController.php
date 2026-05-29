@@ -302,6 +302,7 @@ class SellerController extends BaseController
 
         $propertyData['id'] = $propertyId;
         $propertyData['seller_name'] = $user['name'];
+        $propertyData['image_path'] = $imagePath;
 
         $this->sendSocketNotification('new-property', $propertyData);
 

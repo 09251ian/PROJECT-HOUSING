@@ -54,6 +54,8 @@ class AuditLogModel extends Model
         $session = session();
         $user = $session->get('user');
         
+        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? 'unknown';
+        
         $data = [
             'actor_user_id' => $user['id'] ?? 0,
             'actor_role'    => $user['role'] ?? 'guest',
@@ -61,10 +63,32 @@ class AuditLogModel extends Model
             'entity_type'   => $entityType,
             'entity_id'     => $entityId,
             'metadata'      => $metadata ? json_encode($metadata) : null,
-            'ip_address'    => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'ip_address'    => $ipAddress,
             'created_at'    => date('Y-m-d H:i:s')
         ];
         
-        return $this->insert($data);
+        $result = $this->insert($data);
+        
+        // ========== ADD THIS BLOCK ==========
+        if ($result) {
+            $data['id'] = $this->getInsertID();
+            $this->sendWebSocketNotification($data);
+        }
+        // ========== END ADD ==========
+        
+        return $result;
+    }
+
+    private function sendWebSocketNotification($auditData)
+    {
+        try {
+            $client = \Config\Services::curlrequest();
+            $client->post('http://localhost:3000/new-audit-log', [
+                'json' => $auditData,
+                'timeout' => 2
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'WebSocket audit notification failed: ' . $e->getMessage());
+        }
     }
 }

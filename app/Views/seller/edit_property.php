@@ -23,7 +23,7 @@ $property = $property ?? [];
       <div class="section-title text-white fs-4 mb-0">
         <i class="bi bi-pencil-square me-2"></i>Edit Property
       </div>
-      <div class="text-muted small">Update your listing details and image.</div>
+      <div class="text-white small">Update your listing details and image.</div>
     </div>
     <a href="<?= base_url('/seller/dashboard') ?>" class="btn btn-outline-light btn-sm">
       <i class="bi bi-arrow-left me-1"></i>Back

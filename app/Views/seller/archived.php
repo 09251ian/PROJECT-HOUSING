@@ -29,7 +29,7 @@ $user = $user ?? session()->get('user') ?? [];
       <div class="section-title text-white fs-4 mb-0">
         <i class="bi bi-archive me-2"></i>Archived Properties
       </div>
-      <div class="text-muted small">Restore or delete archived listings.</div>
+      <div class="text-white small">Restore or delete archived listings.</div>
     </div>
     <div>
       <a href="<?= base_url('/seller/dashboard') ?>" class="btn btn-outline-light btn-sm">
@@ -89,7 +89,7 @@ $user = $user ?? session()->get('user') ?? [];
       <?= isset($pager) ? $pager->links() : '' ?>
     </div>
   <?php else: ?>
-    <div class="text-muted">No archived properties found.</div>
+    <div class="text-white">No archived properties found.</div>
   <?php endif; ?>
 </div>
 

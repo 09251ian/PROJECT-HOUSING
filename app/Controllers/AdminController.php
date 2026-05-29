@@ -83,21 +83,22 @@ class AdminController extends BaseController
         $this->checkRoleOrRedirect('admin');
         $userModel = new UserModel();
         
-        $buyersSearch = $this->request->getGet('buyers_search');
-        $buyersSearch = trim($buyersSearch);
-        $sellersSearch = $this->request->getGet('sellers_search');
-        $sellersSearch = trim($sellersSearch);
+        // ========== GLOBAL SEARCH ==========
+        $globalSearch = $this->request->getGet('global_search');
+        $globalSearch = trim($globalSearch);
         
+        // ========== BUYERS PAGINATION ==========
         $buyersCurrentPage = (int) ($this->request->getGet('buyers_page') ?? 1);
         $buyersPerPage = 10;
         
         $buyersQuery = $userModel->where('role', 'buyer');
         
-        if (!empty($buyersSearch)) {
+        // Apply global search to buyers
+        if (!empty($globalSearch)) {
             $buyersQuery->groupStart()
-                ->like('name', $buyersSearch)
-                ->orLike('email', $buyersSearch)
-                ->orLike('contact', $buyersSearch)
+                ->like('name', $globalSearch)
+                ->orLike('email', $globalSearch)
+                ->orLike('contact', $globalSearch)
                 ->groupEnd();
         }
         
@@ -117,16 +118,18 @@ class AdminController extends BaseController
             'lastItem' => min($buyersCurrentPage * $buyersPerPage, $buyersTotal)
         ];
         
+        // ========== SELLERS PAGINATION ==========
         $sellersCurrentPage = (int) ($this->request->getGet('sellers_page') ?? 1);
         $sellersPerPage = 10;
         
         $sellersQuery = $userModel->where('role', 'seller');
         
-        if (!empty($sellersSearch)) {
+        // Apply global search to sellers
+        if (!empty($globalSearch)) {
             $sellersQuery->groupStart()
-                ->like('name', $sellersSearch)
-                ->orLike('email', $sellersSearch)
-                ->orLike('contact', $sellersSearch)
+                ->like('name', $globalSearch)
+                ->orLike('email', $globalSearch)
+                ->orLike('contact', $globalSearch)
                 ->groupEnd();
         }
         
@@ -151,8 +154,7 @@ class AdminController extends BaseController
             'sellers' => $sellers,
             'buyersPager' => $buyersPager,
             'sellersPager' => $sellersPager,
-            'buyersSearch' => $buyersSearch,
-            'sellersSearch' => $sellersSearch
+            'globalSearch' => $globalSearch
         ]);
     }
 
@@ -214,8 +216,9 @@ class AdminController extends BaseController
         $search = $this->request->getGet('search');
         $search = trim($search);
         
+        // Make sure to select created_at from offers table
         $query = $offerModel
-            ->select('offers.*, buyers.name as buyer_name, properties.title as property_title')
+            ->select('offers.*, buyers.name as buyer_name, properties.title as property_title, offers.created_at')
             ->join('users as buyers', 'buyers.id = offers.buyer_id')
             ->join('properties', 'properties.id = offers.property_id');
         
@@ -449,6 +452,7 @@ class AdminController extends BaseController
                 $img->move(FCPATH . 'uploads', $newName);
                 $data['image_path'] = 'uploads/' . $newName;
                 
+                // Delete old image if exists
                 if (!empty($property['image_path']) && file_exists(FCPATH . $property['image_path'])) {
                     unlink(FCPATH . $property['image_path']);
                 }
@@ -458,9 +462,10 @@ class AdminController extends BaseController
 
             $data['is_archived'] = (int) ($property['is_archived'] ?? 0);
 
+            // Update the property
             $propertyModel->update((int) $id, $data);
             
-            // Get updated property with seller info for broadcast
+            // Get updated property with seller info for broadcast (AFTER update)
             $updatedProperty = $propertyModel->select('properties.*, users.name as seller_name')
                 ->join('users', 'users.id = properties.seller_id')
                 ->where('properties.id', $id)
@@ -487,6 +492,14 @@ class AdminController extends BaseController
             );
             // ========== END AUDIT LOG ==========
             
+            // Debug log
+            log_message('debug', '=== SENDING PROPERTY UPDATE ===');
+            log_message('debug', 'Property ID: ' . $updatedProperty['id']);
+            log_message('debug', 'Title: ' . $updatedProperty['title']);
+            log_message('debug', 'Image Path: ' . ($updatedProperty['image_path'] ?? 'NULL'));
+            log_message('debug', '================================');
+            
+            // Send socket notification
             $this->sendSocketNotification('update-property', $updatedProperty);
 
             session()->setFlashdata('success', 'Property updated successfully and broadcasted in real-time!');
@@ -658,21 +671,24 @@ class AdminController extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Offer ID and status required']);
         }
         
-        $offerModel = new OfferModel();
+        $offerModel = new \App\Models\OfferModel();
         $offer = $offerModel->find($offerId);
         
         if (!$offer) {
             return $this->response->setJSON(['success' => false, 'message' => 'Offer not found']);
         }
         
+        // Update the offer status
         $offerModel->update($offerId, ['status' => $status]);
         
-        $propertyModel = new PropertyModel();
-        $userModel = new UserModel();
+        // Get property and user details for notification
+        $propertyModel = new \App\Models\PropertyModel();
+        $userModel = new \App\Models\UserModel();
         
         $property = $propertyModel->find($offer['property_id']);
         $buyer = $userModel->find($offer['buyer_id']);
         
+        // Send WebSocket notification
         $offerUpdate = [
             'id' => $offerId,
             'property_id' => $offer['property_id'],
@@ -681,14 +697,14 @@ class AdminController extends BaseController
             'buyer_name' => $buyer['name'] ?? 'Buyer',
             'status' => $status,
             'amount' => $offer['amount'],
-            'message' => $status === 'accepted' ? 'Offer Accepted!' : 'Offer Rejected'
+            'message' => $status === 'accepted' ? 'Your offer has been accepted!' : 'Your offer has been rejected.'
         ];
         
         $this->sendSocketNotification('offer-status-updated', $offerUpdate);
         
         return $this->response->setJSON([
             'success' => true,
-            'message' => 'Offer status updated successfully'
+            'message' => 'Offer ' . $status . ' successfully'
         ]);
     }
 
@@ -699,11 +715,9 @@ class AdminController extends BaseController
 
         $auditModel = new AuditLogModel();
         
-        // ========== GET SEARCH PARAMETERS ==========
-        $loginSearch = $this->request->getGet('login_search');
-        $loginSearch = trim($loginSearch);
-        $propertySearch = $this->request->getGet('property_search');
-        $propertySearch = trim($propertySearch);
+        // ========== GET GLOBAL SEARCH PARAMETER ==========
+        $globalSearch = $this->request->getGet('global_search');
+        $globalSearch = trim($globalSearch);
         
         // ========== PAGINATION FOR LOGIN/LOGOUT TABLE ==========
         $loginPage = (int) ($this->request->getGet('login_page') ?? 1);
@@ -711,13 +725,13 @@ class AdminController extends BaseController
         
         $loginBuilder = $auditModel->whereIn('activity_type', ['login', 'logout', 'register']);
         
-        // Apply search filter for login table
-        if (!empty($loginSearch)) {
+        // Apply global search filter to login table
+        if (!empty($globalSearch)) {
             $loginBuilder->groupStart()
-                ->like('actor_user_id', $loginSearch)
-                ->orLike('actor_role', $loginSearch)
-                ->orLike('activity_type', $loginSearch)
-                ->orLike('metadata', $loginSearch)
+                ->like('actor_user_id', $globalSearch)
+                ->orLike('actor_role', $globalSearch)
+                ->orLike('activity_type', $globalSearch)
+                ->orLike('metadata', $globalSearch)
                 ->groupEnd();
         }
         
@@ -743,13 +757,13 @@ class AdminController extends BaseController
         $propertyBuilder = $auditModel->where('entity_type', 'property')
                                     ->whereIn('activity_type', ['create', 'update', 'delete', 'archive', 'unarchive']);
         
-        // Apply search filter for property table
-        if (!empty($propertySearch)) {
+        // Apply global search filter to property table
+        if (!empty($globalSearch)) {
             $propertyBuilder->groupStart()
-                ->like('actor_user_id', $propertySearch)
-                ->orLike('actor_role', $propertySearch)
-                ->orLike('activity_type', $propertySearch)
-                ->orLike('metadata', $propertySearch)
+                ->like('actor_user_id', $globalSearch)
+                ->orLike('actor_role', $globalSearch)
+                ->orLike('activity_type', $globalSearch)
+                ->orLike('metadata', $globalSearch)
                 ->groupEnd();
         }
         
@@ -771,10 +785,9 @@ class AdminController extends BaseController
         return view('admin/audit', [
             'loginLogs' => $loginLogs,
             'loginPager' => $loginPager,
-            'loginSearch' => $loginSearch,
             'propertyLogs' => $propertyLogs,
             'propertyPager' => $propertyPager,
-            'propertySearch' => $propertySearch,
+            'globalSearch' => $globalSearch,
         ]);
     }
 

@@ -60,3 +60,13 @@ $routes->post('/admin/update-offer-status', 'AdminController::updateOfferStatus'
 $routes->get('admin/audit', 'AdminController::audit');
 $routes->post('admin/archive-property', 'AdminController::archiveProperty');
 $routes->post('admin/unarchive-property', 'AdminController::unarchiveProperty');
+$routes->post('admin/update-offer-status', 'AdminController::updateOfferStatus');
+$routes->post('make_offer', 'MakeOfferController::create');
+
+$routes->get('/test-offer', function() {
+    return 'Route test works!';
+});
+
+$routes->get('/test-offer-action', function() {
+    return 'Route test works!';
+});

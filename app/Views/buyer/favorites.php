@@ -15,7 +15,7 @@ include __DIR__ . '/../partials/header.php';
   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
     <div>
       <h3 class="text-success fw-bold mb-0">My Favorites</h3>
-      <div class="text-muted small">Saved properties you marked for later</div>
+      <div class="text-white small">Saved properties you marked for later</div>
     </div>
 
     <div class="d-flex gap-2">
@@ -66,7 +66,7 @@ include __DIR__ . '/../partials/header.php';
     </div>
   <?php else: ?>
     <div class="text-center py-5">
-      <p class="text-muted mb-3">You have no saved properties yet.</p>
+      <p class="text-white mb-3">You have no saved properties yet.</p>
       <a href="<?= base_url('/buyer/dashboard') ?>" class="btn btn-success">Browse Properties</a>
     </div>
   <?php endif; ?>

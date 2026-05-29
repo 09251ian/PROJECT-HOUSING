@@ -279,6 +279,17 @@ app.get('/test', (req, res) => {
     });
 });
 
+// Broadcast new audit log entry
+app.post('/new-audit-log', (req, res) => {
+    const auditLog = req.body;
+    console.log('📋 New audit log received:', auditLog.activity_type);
+    io.emit('audit-log-added', auditLog);
+    return res.json({
+        success: true,
+        message: 'Audit log broadcasted'
+    });
+});
+
 const PORT = 3000;
 
 server.listen(PORT, () => {
