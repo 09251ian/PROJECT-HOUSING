@@ -37,6 +37,39 @@
     .badge-completed { background-color: #28a745; }
     .badge-pending { background-color: #ffc107; color: #000; }
     .badge-failed { background-color: #dc3545; }
+
+    /* Responsive Table Styles - SAME FONT SIZE ON ALL SCREENS */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .table-responsive table {
+        min-width: 800px;
+        width: 100%;
+    }
+    .table-responsive th,
+    .table-responsive td {
+        white-space: nowrap;
+        vertical-align: middle;
+        font-size: 18px;
+    }
+    /* Mobile screens - SAME FONT SIZE */
+    @media (max-width: 768px) {
+        .table-responsive th,
+        .table-responsive td {
+            font-size: 18px;
+            padding: 8px 6px;
+        }
+        .table-responsive table {
+            min-width: 700px;
+        }
+        .badge {
+            font-size: 11px;
+            padding: 3px 8px;
+        }
+    }
   </style>
 </head>
 <body class="app-dark">
@@ -101,7 +134,8 @@
   </div>
   <!-- END SEARCH BAR -->
 
-  <div class="table-responsive app-table-wrap">
+  <!-- Responsive Table -->
+  <div class="table-responsive">
     <table class="table table-dark table-striped align-middle">
       <thead>
         <tr>
@@ -117,19 +151,19 @@
       <tbody>
         <?php if (!empty($payments)): ?>
           <?php foreach ($payments as $p): ?>
-           <tr>
-            <td><?= esc($p['id']) ?></td>
-            <td><i class="bi bi-house-door-fill text-info"></i> <?= esc($p['property_title'] ?? 'N/A') ?></td>
-            <td><i class="bi bi-person-circle"></i> <?= esc($p['buyer_name'] ?? 'N/A') ?></td>
-            <td><i class="bi bi-briefcase-fill"></i> <?= esc($p['seller_name'] ?? 'N/A') ?></td>
-            <td class="fw-bold text-success">₱<?= number_format((float)$p['amount'], 2) ?></td>
-            <td>
-              <span class="badge <?= $p['status'] === 'completed' ? 'badge-completed' : ($p['status'] === 'pending' ? 'badge-pending' : 'badge-failed') ?>">
-                <?= strtoupper(esc($p['status'] ?? 'pending')) ?>
-              </span>
-            </td>
-            <td><small><?= esc($p['created_at'] ?? 'N/A') ?></small></td>
-           </tr>
+            <tr>
+              <td><?= esc($p['id']) ?></td>
+              <td><i class="bi bi-house-door-fill text-info"></i> <?= esc($p['property_title'] ?? 'N/A') ?></td>
+              <td><i class="bi bi-person-circle"></i> <?= esc($p['buyer_name'] ?? 'N/A') ?></td>
+              <td><i class="bi bi-briefcase-fill"></i> <?= esc($p['seller_name'] ?? 'N/A') ?></td>
+              <td class="fw-bold text-success">₱<?= number_format((float)$p['amount'], 2) ?></td>
+              <td>
+                <span class="badge <?= $p['status'] === 'completed' ? 'badge-completed' : ($p['status'] === 'pending' ? 'badge-pending' : 'badge-failed') ?>">
+                  <?= strtoupper(esc($p['status'] ?? 'pending')) ?>
+                </span>
+              </td>
+              <td><small><?= date('M d, Y h:i A', strtotime($p['created_at'] ?? 'now')) ?></small></td>
+            </tr>
           <?php endforeach; ?>
         <?php else: ?>
           <tr>
@@ -179,7 +213,7 @@
   </div>
 
   <!-- Showing results info -->
-  <div class="text-center text-white-50 small mt-2">
+  <div class="text-center text-white small mt-2">
       Showing <strong><?= $pager->firstItem ?></strong> to <strong><?= $pager->lastItem ?></strong> 
       of <strong><?= $pager->total ?></strong> transactions
   </div>

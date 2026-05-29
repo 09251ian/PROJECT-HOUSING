@@ -104,6 +104,47 @@
     .stat-rejected {
         color: #dc3545;
     }
+
+    /* Responsive Table Styles - SAME FONT SIZE ON ALL SCREENS */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .table-responsive table {
+        min-width: 800px;
+        width: 100%;
+    }
+    .table-responsive th,
+    .table-responsive td {
+        white-space: nowrap;
+        vertical-align: middle;
+        font-size: 18px;
+    }
+    /* Allow action column buttons to stay visible */
+    .table-responsive td:last-child {
+        white-space: nowrap;
+    }
+    /* Mobile screens - SAME FONT SIZE */
+    @media (max-width: 768px) {
+        .table-responsive th,
+        .table-responsive td {
+            font-size: 18px;
+            padding: 8px 6px;
+        }
+        .table-responsive table {
+            min-width: 700px;
+        }
+        .badge-status {
+            font-size: 11px;
+            padding: 3px 8px;
+        }
+        .btn-sm {
+            font-size: 11px;
+            padding: 4px 8px;
+        }
+    }
   </style>
 </head>
 <body class="app-dark">
@@ -151,39 +192,40 @@
     </div>
   </div>
 
-    <!-- SEARCH BAR - LEFT ALIGNED -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-        <form method="get" action="<?= base_url('/admin/offers') ?>" class="d-flex gap-2">
-            <div class="input-group">
-            <span class="input-group-text bg-dark text-secondary border-secondary">
-                <i class="bi bi-search"></i>
-            </span>
-            <input type="text" 
-                    name="search" 
-                    class="form-control bg-dark text-white border-secondary" 
-                    placeholder="Search by property title, buyer name, or amount..." 
-                    value="<?= esc($search ?? '') ?>">
-            <button class="btn btn-primary" type="submit">
-                Search
-            </button>
-            </div>
-            <?php if (!empty($search)): ?>
-            <a href="<?= base_url('/admin/offers') ?>" class="btn btn-outline-secondary">
-                <i class="bi bi-x-circle"></i> Clear
-            </a>
-            <?php endif; ?>
-        </form>
-        <?php if (!empty($search)): ?>
-            <div class="mt-2 text-muted small">
-            <i class="bi bi-info-circle"></i> Showing results for: "<strong class="text-warning"><?= esc($search) ?></strong>"
-            </div>
-        <?php endif; ?>
+  <!-- SEARCH BAR - LEFT ALIGNED -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <form method="get" action="<?= base_url('/admin/offers') ?>" class="d-flex gap-2">
+        <div class="input-group">
+          <span class="input-group-text bg-dark text-secondary border-secondary">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" 
+                name="search" 
+                class="form-control bg-dark text-white border-secondary" 
+                placeholder="Search by property title, buyer name, or amount..." 
+                value="<?= esc($search ?? '') ?>">
+          <button class="btn btn-primary" type="submit">
+            Search
+          </button>
         </div>
+        <?php if (!empty($search)): ?>
+          <a href="<?= base_url('/admin/offers') ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Clear
+          </a>
+        <?php endif; ?>
+      </form>
+      <?php if (!empty($search)): ?>
+        <div class="mt-2 text-muted small">
+          <i class="bi bi-info-circle"></i> Showing results for: "<strong class="text-warning"><?= esc($search) ?></strong>"
+        </div>
+      <?php endif; ?>
     </div>
-    <!-- END SEARCH BAR -->
+  </div>
+  <!-- END SEARCH BAR -->
 
-  <div class="table-responsive app-table-wrap">
+  <!-- Responsive Table -->
+  <div class="table-responsive">
     <table class="table table-dark table-striped align-middle">
       <thead>
         <tr>
@@ -197,32 +239,36 @@
         </tr>
       </thead>
       <tbody id="offers-table-body">
-        <?php foreach (($offers ?? []) as $o): ?>
-          <tr data-offer-id="<?= esc($o['id']) ?>" data-offer-status="<?= esc($o['status']) ?>" class="offer-row">
-            <td><?= esc($o['id']) ?></td>
-            <td><i class="bi bi-house-door-fill text-info"></i> <?= esc($o['property_title'] ?? 'N/A') ?></td>
-            <td><i class="bi bi-person-circle"></i> <?= esc($o['buyer_name'] ?? 'N/A') ?></td>
-            <td class="fw-bold text-success">₱<?= number_format((float)$o['amount'], 2) ?></td>
-            <td>
-              <span class="badge badge-status badge-<?= esc($o['status']) ?> status-badge">
-                <?= strtoupper(esc($o['status'])) ?>
-              </span>
-            </td>
-            <td><small><?= esc($o['created_at'] ?? 'N/A') ?></small></td>
-            <td>
-              <?php if ($o['status'] === 'pending'): ?>
-                <button class="btn btn-sm btn-success accept-offer" data-offer-id="<?= esc($o['id']) ?>" data-property-title="<?= esc($o['property_title'] ?? '') ?>" data-buyer-name="<?= esc($o['buyer_name'] ?? '') ?>" data-amount="<?= esc($o['amount']) ?>">
-                  <i class="bi bi-check-lg"></i> Accept
-                </button>
-                <button class="btn btn-sm btn-danger reject-offer" data-offer-id="<?= esc($o['id']) ?>" data-property-title="<?= esc($o['property_title'] ?? '') ?>" data-buyer-name="<?= esc($o['buyer_name'] ?? '') ?>" data-amount="<?= esc($o['amount']) ?>">
-                  <i class="bi bi-x-lg"></i> Reject
-                </button>
-              <?php else: ?>
-                <span class="text-muted small">—</span>
-              <?php endif; ?>
-            </td>
-          </tr>
-        <?php endforeach; ?>
+        <?php if (!empty($offers)): ?>
+          <?php foreach ($offers as $o): ?>
+            <tr data-offer-id="<?= esc($o['id']) ?>" data-offer-status="<?= esc($o['status']) ?>" class="offer-row">
+              <td><?= esc($o['id']) ?></td>
+              <td><i class="bi bi-house-door-fill text-info"></i> <?= esc($o['property_title'] ?? 'N/A') ?></td>
+              <td><i class="bi bi-person-circle"></i> <?= esc($o['buyer_name'] ?? 'N/A') ?></td>
+              <td class="fw-bold text-success">₱<?= number_format((float)$o['amount'], 2) ?></td>
+              <td>
+                <span class="badge badge-status badge-<?= esc($o['status']) ?> status-badge">
+                  <?= strtoupper(esc($o['status'])) ?>
+                </span>
+              </td>
+              <td><small><?= date('M d, Y h:i A', strtotime($o['created_at'] ?? 'now')) ?></small></td>
+              <td>
+                <?php if ($o['status'] === 'pending'): ?>
+                  <button class="btn btn-sm btn-success accept-offer" data-offer-id="<?= esc($o['id']) ?>" data-property-title="<?= esc($o['property_title'] ?? '') ?>" data-buyer-name="<?= esc($o['buyer_name'] ?? '') ?>" data-amount="<?= esc($o['amount']) ?>">
+                    <i class="bi bi-check-lg"></i> Accept
+                  </button>
+                  <button class="btn btn-sm btn-danger reject-offer" data-offer-id="<?= esc($o['id']) ?>" data-property-title="<?= esc($o['property_title'] ?? '') ?>" data-buyer-name="<?= esc($o['buyer_name'] ?? '') ?>" data-amount="<?= esc($o['amount']) ?>">
+                    <i class="bi bi-x-lg"></i> Reject
+                  </button>
+                <?php else: ?>
+                  <span class="text-muted small">—</span>
+                <?php endif; ?>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <tr><td colspan="7" class="text-center text-muted">No offers found</td></tr>
+        <?php endif; ?>
       </tbody>
     </table>
   </div>
@@ -234,7 +280,7 @@
           <ul class="pagination">
               <?php if ($pager->currentPage > 1): ?>
                   <li class="page-item">
-                      <a class="page-link" href="?page=<?= $pager->currentPage - 1 ?>" aria-label="Previous">
+                      <a class="page-link" href="?page=<?= $pager->currentPage - 1 ?>&search=<?= urlencode($search ?? '') ?>" aria-label="Previous">
                           <span aria-hidden="true">&laquo; Prev</span>
                       </a>
                   </li>
@@ -246,7 +292,7 @@
 
               <?php for ($i = 1; $i <= $pager->lastPage; $i++): ?>
                   <li class="page-item <?= $i == $pager->currentPage ? 'active' : '' ?>">
-                      <a class="page-link" href="?page=<?= $i ?>">
+                      <a class="page-link" href="?page=<?= $i ?>&search=<?= urlencode($search ?? '') ?>">
                           <?= $i ?>
                       </a>
                   </li>
@@ -254,7 +300,7 @@
 
               <?php if ($pager->currentPage < $pager->lastPage): ?>
                   <li class="page-item">
-                      <a class="page-link" href="?page=<?= $pager->currentPage + 1 ?>" aria-label="Next">
+                      <a class="page-link" href="?page=<?= $pager->currentPage + 1 ?>&search=<?= urlencode($search ?? '') ?>" aria-label="Next">
                           <span aria-hidden="true">Next &raquo;</span>
                       </a>
                   </li>
@@ -286,7 +332,7 @@
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
 <script>
-// Helper functions (keep your existing helper functions here)
+// Helper functions
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -387,7 +433,7 @@ function updateCounters() {
 
 // Handle offer acceptance/rejection
 function handleOfferAction(offerId, action, propertyTitle, buyerName, amount) {
-    fetch('/admin/update-offer-status', {
+    fetch('<?= base_url('/admin/update-offer-status') ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -398,7 +444,6 @@ function handleOfferAction(offerId, action, propertyTitle, buyerName, amount) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Reload page to reflect changes
             showRealtimeAlert(`Offer ${action} for ${escapeHtml(propertyTitle)} from ${escapeHtml(buyerName)} for ${formatCurrency(amount)}`, action === 'accepted' ? 'success' : 'warning');
             setTimeout(() => location.reload(), 1500);
         } else {

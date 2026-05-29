@@ -60,6 +60,61 @@
         padding: 10px 15px;
         margin-bottom: 20px;
     }
+    /* Responsive Table Styles */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 10px;
+    }
+    .table-responsive table {
+        min-width: 650px;
+        width: 100%;
+        table-layout: fixed; /* ← ADD THIS - fixes column widths */
+    }
+    .table-responsive th,
+    .table-responsive td {
+        vertical-align: middle;
+        font-size: 18px;
+        word-wrap: break-word; /* ← ADD THIS - wraps text */
+    }
+    /* Bio column - fixed width with text wrapping */
+    .bio-cell {
+        white-space: normal;
+        word-break: break-word;
+        max-width: 250px; /* ← ADD THIS - limits width */
+        min-width: 150px;
+        font-size: 18px;
+    }
+    /* Registered column - fixed width */
+    .table-responsive td:last-child,
+    .table-responsive th:last-child {
+        width: 100px;
+        text-align: center;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 5px 12px;
+        font-size: 12px;
+        border-radius: 20px;
+    }
+
+    /* Remove blue color from registered column */
+  .table-responsive td:last-child span,
+  .table-responsive td:last-child a {
+      color: white !important;
+      text-decoration: none !important;
+  }
+
+  .badge-success, .badge.bg-success {
+      background-color: #28a745 !important;
+      color: white !important;
+  }
+
+  .badge-danger, .badge.bg-danger {
+      background-color: #dc3545 !important;
+      color: white !important;
+  }
   </style>
 </head>
 <body class="app-dark">
@@ -130,7 +185,9 @@
     <i class="bi bi-person-badge-fill"></i> Buyers 
     <span class="badge bg-info ms-2" id="buyers-count-badge"><?= $buyersPager->total ?? 0 ?></span>
   </h5>
-  <div class="table-responsive app-table-wrap">
+  
+  <!-- Responsive Buyers Table -->
+  <div class="table-responsive">
     <table class="table table-dark table-striped align-middle">
       <thead>
         <tr>
@@ -150,12 +207,19 @@
               <td><i class="bi bi-person-circle"></i> <?= esc($u['name']) ?></td>
               <td><?= esc($u['email']) ?></td>
               <td><?= esc($u['contact'] ?? 'N/A') ?></td>
-              <td style="max-width:320px;"><?= esc($u['bio'] ?? 'N/A') ?></td>
-              <td><small><?= esc($u['created_at'] ?? 'N/A') ?></small></td>
-            </tr>
-          <?php endforeach; ?>
+              <td class="bio-cell"><?= esc($u['bio'] ?? 'N/A') ?></td>
+              <td>
+                <?php if (!empty($u['created_at']) && $u['created_at'] != 'N/A'): ?>
+                  <span class="badge bg-success">Yes</span>
+                <?php else: ?>
+                  <span class="badge bg-danger">No</span>
+                <?php endif; ?>
+               </td>
+              
+            <?php endforeach; ?>
         <?php else: ?>
-          <tr><td colspan="6" class="text-center text-muted">No buyers found</td></tr>
+          <tr><td colspan="6" class="text-center text-muted">No buyers found</td>
+          </tr>
         <?php endif; ?>
       </tbody>
     </table>
@@ -196,7 +260,9 @@
     <i class="bi bi-briefcase-fill"></i> Sellers 
     <span class="badge bg-warning ms-2" id="sellers-count-badge"><?= $sellersPager->total ?? 0 ?></span>
   </h5>
-  <div class="table-responsive app-table-wrap">
+  
+  <!-- Responsive Sellers Table -->
+  <div class="table-responsive">
     <table class="table table-dark table-striped align-middle">
       <thead>
         <tr>
@@ -216,12 +282,19 @@
               <td><i class="bi bi-person-circle"></i> <?= esc($u['name']) ?></td>
               <td><?= esc($u['email']) ?></td>
               <td><?= esc($u['contact'] ?? 'N/A') ?></td>
-              <td style="max-width:320px;"><?= esc($u['bio'] ?? 'N/A') ?></td>
-              <td><small><?= esc($u['created_at'] ?? 'N/A') ?></small></td>
-            </tr>
-          <?php endforeach; ?>
+              <td class="bio-cell"><?= esc($u['bio'] ?? 'N/A') ?></td>
+              <td class="text-center">
+                  <?php if (!empty($u['created_at']) && $u['created_at'] != 'N/A'): ?>
+                      <span class="badge bg-success">Yes</span>
+                  <?php else: ?>
+                      <span class="badge bg-danger">No</span>
+                  <?php endif; ?>
+              </td>
+              
+            <?php endforeach; ?>
         <?php else: ?>
-          <tr><td colspan="6" class="text-center text-muted">No sellers found</td></tr>
+          <tr><td colspan="6" class="text-center text-muted">No sellers found</td>
+          </tr>
         <?php endif; ?>
       </tbody>
     </table>

@@ -119,7 +119,8 @@ class Auth extends BaseController
             'bio'         => $bio,
             'role'        => $role,
             'password'    => $password,
-            'profile_pic' => $profileName
+            'profile_pic' => $profileName,
+            'created_at'  => date('Y-m-d H:i:s')
         ]);
         
         $userId = $model->getInsertID();

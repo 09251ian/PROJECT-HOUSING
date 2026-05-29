@@ -48,6 +48,55 @@
         padding: 10px 15px;
         margin-bottom: 15px;
     }
+    /* Responsive Table Styles - SAME FONT SIZE ON ALL SCREENS */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .table-responsive table {
+        min-width: 700px;
+        width: 100%;
+    }
+    .table-responsive th,
+    .table-responsive td {
+        white-space: nowrap;
+        vertical-align: middle;
+        font-size: 18px;
+    }
+    /* Allow specific columns to wrap */
+    .table-responsive td:last-child {
+        white-space: normal;
+        word-break: break-word;
+        min-width: 250px;
+        max-width: 350px;
+    }
+    /* Login/Logout table - details column */
+    .login-details {
+        white-space: normal;
+        word-break: break-word;
+        min-width: 200px;
+        max-width: 300px;
+    }
+    /* Mobile screens - SAME FONT SIZE, just adjust padding */
+    @media (max-width: 768px) {
+        .table-responsive th,
+        .table-responsive td {
+            font-size: 18px;  /* ← SAME as desktop, NOT larger */
+            padding: 8px 6px;
+        }
+        .table-responsive table {
+            min-width: 600px;
+        }
+        .section-title h4 {
+            font-size: 16px;
+        }
+        .badge {
+            font-size: 11px;
+            padding: 3px 8px;
+        }
+      }
   </style>
 </head>
 <body class="app-dark">
@@ -83,10 +132,10 @@
             <i class="bi bi-search-heart"></i>
           </span>
           <input type="text" 
-                 name="global_search" 
-                 class="form-control bg-dark text-white border-secondary" 
-                 placeholder="Global search: Search by user ID, role, activity, property title..." 
-                 value="<?= esc($globalSearch ?? '') ?>">
+                name="global_search" 
+                class="form-control bg-dark text-white border-secondary" 
+                placeholder="Global search: Search by user ID, role, activity, property title..." 
+                value="<?= esc($globalSearch ?? '') ?>">
           <button class="btn btn-primary" type="submit">
             <i class="bi bi-search"></i> Search
           </button>
@@ -116,15 +165,15 @@
     <p class="text-white small">Track user sessions and authentication activities</p>
   </div>
 
-  <div class="table-responsive app-table-wrap">
+  <div class="table-responsive">
     <table class="table table-dark table-striped align-middle">
       <thead>
         <tr>
-          <th>Time</th>
-          <th>User ID</th>
-          <th>Role</th>
-          <th>Activity</th>
-          <th>Details</th>
+          <th style="white-space: nowrap;">Time</th>
+          <th style="white-space: nowrap;">User ID</th>
+          <th style="white-space: nowrap;">Role</th>
+          <th style="white-space: nowrap;">Activity</th>
+          <th style="white-space: nowrap;">Details / Email</th>
         </tr>
       </thead>
       <tbody id="login-logout-table">
@@ -145,7 +194,7 @@
                   <?= strtoupper(esc($l['activity_type'] ?? '')) ?>
                 </span>
               </td>
-              <td>
+              <td class="login-details">
                 <?php
                 $meta = json_decode($l['metadata'] ?? '{}', true);
                 if ($l['activity_type'] === 'login' && isset($meta['email'])): ?>
@@ -156,7 +205,7 @@
                 <?php else: ?>
                   <span class="text-white">—</span>
                 <?php endif; ?>
-              </td>
+               </td>
             </tr>
           <?php endforeach; ?>
         <?php endif; ?>
@@ -171,7 +220,7 @@
           <ul class="pagination">
               <?php if ($loginPager->currentPage > 1): ?>
                   <li class="page-item">
-                      <a class="page-link" href="?login_page=<?= $loginPager->currentPage - 1 ?>&property_page=<?= $propertyPager->currentPage ?? 1 ?>&login_search=<?= urlencode($loginSearch ?? '') ?>&property_search=<?= urlencode($propertySearch ?? '') ?>">
+                      <a class="page-link" href="?login_page=<?= $loginPager->currentPage - 1 ?>&property_page=<?= $propertyPager->currentPage ?? 1 ?>&global_search=<?= urlencode($globalSearch ?? '') ?>">
                           &laquo; Prev
                       </a>
                   </li>
@@ -181,7 +230,7 @@
 
               <?php for ($i = 1; $i <= $loginPager->lastPage; $i++): ?>
                   <li class="page-item <?= $i == $loginPager->currentPage ? 'active' : '' ?>">
-                      <a class="page-link" href="?login_page=<?= $i ?>&property_page=<?= $propertyPager->currentPage ?? 1 ?>&login_search=<?= urlencode($loginSearch ?? '') ?>&property_search=<?= urlencode($propertySearch ?? '') ?>">
+                      <a class="page-link" href="?login_page=<?= $i ?>&property_page=<?= $propertyPager->currentPage ?? 1 ?>&global_search=<?= urlencode($globalSearch ?? '') ?>">
                           <?= $i ?>
                       </a>
                   </li>
@@ -189,7 +238,7 @@
 
               <?php if ($loginPager->currentPage < $loginPager->lastPage): ?>
                   <li class="page-item">
-                      <a class="page-link" href="?login_page=<?= $loginPager->currentPage + 1 ?>&property_page=<?= $propertyPager->currentPage ?? 1 ?>&login_search=<?= urlencode($loginSearch ?? '') ?>&property_search=<?= urlencode($propertySearch ?? '') ?>">
+                      <a class="page-link" href="?login_page=<?= $loginPager->currentPage + 1 ?>&property_page=<?= $propertyPager->currentPage ?? 1 ?>&global_search=<?= urlencode($globalSearch ?? '') ?>">
                           Next &raquo;
                       </a>
                   </li>
@@ -213,15 +262,15 @@
     <p class="text-white small">Track property creations, updates, deletions, and archive status</p>
   </div>
 
-  <div class="table-responsive app-table-wrap">
+  <div class="table-responsive">
     <table class="table table-dark table-striped align-middle">
       <thead>
         <tr>
-          <th>Time</th>
-          <th>Property</th>
-          <th>Action</th>
-          <th>Changed By</th>
-          <th>Changes / Details</th>
+          <th style="white-space: nowrap;">Time</th>
+          <th style="white-space: nowrap;">Property</th>
+          <th style="white-space: nowrap;">Action</th>
+          <th style="white-space: nowrap;">Changed By</th>
+          <th style="white-space: nowrap;">Changes / Details</th>
         </tr>
       </thead>
       <tbody id="property-crud-table">
@@ -243,7 +292,7 @@
                 ?>
                 <strong><?= esc($title) ?></strong><br>
                 <small class="text-muted">ID: <?= esc($l['entity_id'] ?? '?') ?></small>
-              </td>
+               </td>
               <td>
                 <?php if ($l['activity_type'] === 'create'): ?>
                   <span class="badge badge-create"><i class="bi bi-plus-circle"></i> CREATE</span>
@@ -256,15 +305,18 @@
                 <?php elseif ($l['activity_type'] === 'unarchive'): ?>
                   <span class="badge badge-unarchive"><i class="bi bi-arrow-repeat"></i> UNARCHIVE</span>
                 <?php endif; ?>
-              </td>
+               </td>
               <td>
                 <strong><?= esc($l['actor_role'] ?? '?') ?></strong><br>
                 <small class="text-muted">ID: <?= esc($l['actor_user_id'] ?? '?') ?></small>
-                <?php if (isset($meta['source'])): ?>
-                  <br><small class="text-muted">Source: <?= esc($meta['source']) ?></small>
+                <?php if (isset($meta['email'])): ?>
+                    <br><small class="text-muted"><i class="bi bi-envelope"></i> <?= esc($meta['email']) ?></small>
                 <?php endif; ?>
-              </td>
-              <td style="max-width:400px;">
+                <?php if (isset($meta['source'])): ?>
+                    <br><small class="text-muted">Source: <?= esc($meta['source']) ?></small>
+                <?php endif; ?>
+               </td>
+              <td style="max-width:400px; white-space: normal; word-break: break-word;">
                 <?php
                 $meta = json_decode($l['metadata'] ?? '{}', true);
                 
@@ -314,7 +366,7 @@
                     <br><span class="text-success">✅ Property is now visible to buyers again</span>
                   </div>
                 <?php endif; ?>
-              </td>
+               </td>
             </tr>
           <?php endforeach; ?>
         <?php endif; ?>
@@ -329,7 +381,7 @@
           <ul class="pagination">
               <?php if ($propertyPager->currentPage > 1): ?>
                   <li class="page-item">
-                      <a class="page-link" href="?login_page=<?= $loginPager->currentPage ?? 1 ?>&property_page=<?= $propertyPager->currentPage - 1 ?>&login_search=<?= urlencode($loginSearch ?? '') ?>&property_search=<?= urlencode($propertySearch ?? '') ?>">
+                      <a class="page-link" href="?login_page=<?= $loginPager->currentPage ?? 1 ?>&property_page=<?= $propertyPager->currentPage - 1 ?>&global_search=<?= urlencode($globalSearch ?? '') ?>">
                           &laquo; Prev
                       </a>
                   </li>
@@ -339,7 +391,7 @@
 
               <?php for ($i = 1; $i <= $propertyPager->lastPage; $i++): ?>
                   <li class="page-item <?= $i == $propertyPager->currentPage ? 'active' : '' ?>">
-                      <a class="page-link" href="?login_page=<?= $loginPager->currentPage ?? 1 ?>&property_page=<?= $i ?>&login_search=<?= urlencode($loginSearch ?? '') ?>&property_search=<?= urlencode($propertySearch ?? '') ?>">
+                      <a class="page-link" href="?login_page=<?= $loginPager->currentPage ?? 1 ?>&property_page=<?= $i ?>&global_search=<?= urlencode($globalSearch ?? '') ?>">
                           <?= $i ?>
                       </a>
                   </li>
@@ -347,7 +399,7 @@
 
               <?php if ($propertyPager->currentPage < $propertyPager->lastPage): ?>
                   <li class="page-item">
-                      <a class="page-link" href="?login_page=<?= $loginPager->currentPage ?? 1 ?>&property_page=<?= $propertyPager->currentPage + 1 ?>&login_search=<?= urlencode($loginSearch ?? '') ?>&property_search=<?= urlencode($propertySearch ?? '') ?>">
+                      <a class="page-link" href="?login_page=<?= $loginPager->currentPage ?? 1 ?>&property_page=<?= $propertyPager->currentPage + 1 ?>&global_search=<?= urlencode($globalSearch ?? '') ?>">
                           Next &raquo;
                       </a>
                   </li>
@@ -423,13 +475,10 @@ socket.on('audit-log-added', (auditLog) => {
     showNotification(auditLog);
 });
 
-// Function to add login/logout to table
-// Function to add login/logout to table
 function addLoginLogoutToTable(log) {
     const tableBody = document.querySelector('#login-logout-table');
     if (!tableBody) return;
     
-    // Remove "No records" message if exists
     if (tableBody.children.length === 1 && tableBody.children[0].innerText.includes('No login/logout records')) {
         tableBody.innerHTML = '';
     }
@@ -460,13 +509,12 @@ function addLoginLogoutToTable(log) {
         <td><strong>${escapeHtml(log.actor_user_id)}</strong></td>
         <td><span class="badge bg-${roleClass}">${escapeHtml(roleText).toUpperCase()}</span></td>
         <td><span class="badge badge-${log.activity_type}">${escapeHtml(log.activity_type).toUpperCase()}</span></td>
-        <td>${details || '—'}</td>
+        <td class="login-details">${details || '—'}</td>
     `;
     
     tableBody.insertBefore(row, tableBody.firstChild);
 }
 
-// Function to add property logs to table
 function addPropertyLogToTable(log) {
     const tableBody = document.querySelector('#property-crud-table');
     if (!tableBody) return;
@@ -500,54 +548,14 @@ function addPropertyLogToTable(log) {
         <td><small>${formattedDate}</small></td>
         <td><strong>${escapeHtml(title)}</strong><br><small class="text-muted">ID: ${escapeHtml(log.entity_id)}</small></td>
         <td>${actionBadge}</td>
-        <td><strong>${escapeHtml(log.actor_role)}</strong><br><small class="text-muted">ID: ${escapeHtml(log.actor_user_id)}</small></td>
-        <td style="max-width:400px;">${formatPropertyDetails(log, meta) || '—'}</td>
+        <td><strong>${escapeHtml(log.actor_role)}</strong><br><small class="text-muted">ID: ${escapeHtml(log.actor_user_id)}</small>
+        ${meta.email ? `<br><small class="text-muted"><i class="bi bi-envelope"></i> ${escapeHtml(meta.email)}</small>` : ''}
+        ${meta.source ? `<br><small class="text-muted">Source: ${escapeHtml(meta.source)}</small>` : ''}
+        </td>
+        <td style="max-width:400px; white-space: normal; word-break: break-word;">${formatPropertyDetails(log, meta) || '—'}</td>
     `;
     
     tableBody.insertBefore(row, tableBody.firstChild);
-}
-
-// Function to add property logs to table
-function addPropertyLogToTable(log) {
-    // Similar function for property CRUD logs
-    const tableBody = document.querySelector('#property-crud-table');
-    if (!tableBody) return;
-    
-    if (tableBody.children.length === 1 && tableBody.children[0].innerText.includes('No property activity records')) {
-        tableBody.innerHTML = '';
-    }
-    
-    const meta = log.metadata ? JSON.parse(log.metadata) : {};
-    const date = new Date(log.created_at);
-    const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
-                          ' ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    
-    let title = '';
-    if (log.activity_type === 'create' || log.activity_type === 'delete' || log.activity_type === 'archive' || log.activity_type === 'unarchive') {
-        title = meta.title || 'N/A';
-    } else if (log.activity_type === 'update') {
-        title = meta.new?.title || meta.old?.title || 'N/A';
-    }
-    
-    let actionBadge = '';
-    if (log.activity_type === 'create') actionBadge = '<span class="badge badge-create"><i class="bi bi-plus-circle"></i> CREATE</span>';
-    else if (log.activity_type === 'update') actionBadge = '<span class="badge badge-update"><i class="bi bi-pencil-square"></i> UPDATE</span>';
-    else if (log.activity_type === 'delete') actionBadge = '<span class="badge badge-delete"><i class="bi bi-trash"></i> DELETE</span>';
-    else if (log.activity_type === 'archive') actionBadge = '<span class="badge badge-archive"><i class="bi bi-archive"></i> ARCHIVE</span>';
-    else if (log.activity_type === 'unarchive') actionBadge = '<span class="badge badge-unarchive"><i class="bi bi-arrow-repeat"></i> UNARCHIVE</span>';
-    
-    const row = document.createElement('tr');
-    row.style.animation = 'highlight 2s ease-out';
-    row.innerHTML = `
-        <td><small>${formattedDate}</small></td>
-        <td><strong>${escapeHtml(title)}</strong><br><small class="text-muted">ID: ${escapeHtml(log.entity_id)}</small></td>
-        <td>${actionBadge}</td>
-        <td><strong>${escapeHtml(log.actor_role)}</strong><br><small class="text-muted">ID: ${escapeHtml(log.actor_user_id)}</small></td>
-        <td style="max-width:400px;">${formatPropertyDetails(log, meta)}</td>
-    `;
-    
-    tableBody.insertBefore(row, tableBody.firstChild);
-    updateRecordCount();
 }
 
 function formatPropertyDetails(log, meta) {
@@ -574,7 +582,6 @@ function formatPropertyDetails(log, meta) {
 }
 
 function showNotification(log) {
-    // Create a toast notification
     const notification = document.createElement('div');
     notification.className = `alert alert-info position-fixed top-0 end-0 m-3`;
     notification.style.cssText = 'z-index: 9999; animation: slideIn 0.3s ease-out; background: #17a2b8; color: white;';
@@ -600,15 +607,6 @@ function showNotification(log) {
     `;
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 4000);
-}
-
-function updateRecordCount() {
-    // Update the total count display
-    const loginRows = document.querySelectorAll('#login-logout-table tbody tr');
-    const totalSpan = document.querySelector('.total-records');
-    if (totalSpan && loginRows.length) {
-        totalSpan.innerText = loginRows.length;
-    }
 }
 
 function escapeHtml(text) {

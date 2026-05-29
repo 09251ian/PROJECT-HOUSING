@@ -42,6 +42,12 @@ $user = $user ?? session()->get('user') ?? [];
       color: #6c757d;
       border-color: #0f3460;
     }
+
+    .mb-3 .text-white.small {
+      color: #ffffff !important;
+      opacity: 1;
+      visibility: visible;
+    }
   </style>
 </head>
 <body class="app-dark">
@@ -221,17 +227,13 @@ $user = $user ?? session()->get('user') ?? [];
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="offer_id" value="<?= (int)$offer['id'] ?>">
                                     <input type="hidden" name="action" value="accept">
-                                    <button type="submit" class="btn btn-success btn-sm w-100">
-                                      <i class="bi bi-check2-circle me-1"></i>Accept
-                                    </button>
+                                    <button type="submit" class="btn btn-success btn-sm w-100">Accept</button>
                                   </form>
                                   <form method="post" action="<?= base_url('seller/offer_action') ?>" class="m-0 flex-fill">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="offer_id" value="<?= (int)$offer['id'] ?>">
                                     <input type="hidden" name="action" value="reject">
-                                    <button type="submit" class="btn btn-danger btn-sm w-100">
-                                      <i class="bi bi-x-circle me-1"></i>Reject
-                                    </button>
+                                    <button type="submit" class="btn btn-danger btn-sm w-100">Reject</button>
                                   </form>
                                 </div>
                               <?php endif; ?>
@@ -255,18 +257,20 @@ $user = $user ?? session()->get('user') ?? [];
 
                   <div>
                     <div class="text-white small fw-bold mb-2">Active Chats</div>
-                    <?php $chats = $chatsData[$property['id']] ?? []; ?>
-                    <?php if (!empty($chats)): ?>
-                      <div class="d-grid gap-2">
-                        <?php foreach ($chats as $chat): ?>
-                          <a href="<?= base_url('/message/' . $chat['buyer_id'] . '/' . $property['id']) ?>" class="btn btn-outline-success btn-sm text-start">
-                            <i class="bi bi-chat-dots me-1"></i>Chat with <?= esc($chat['buyer_name'] ?? '') ?>
-                          </a>
-                        <?php endforeach; ?>
-                      </div>
-                    <?php else: ?>
-                      <div class="text-white small">No chats yet for this property.</div>
-                    <?php endif; ?>
+                    <div class="active-chats">
+                      <?php $chats = $chatsData[$property['id']] ?? []; ?>
+                      <?php if (!empty($chats)): ?>
+                        <div class="d-grid gap-2">
+                          <?php foreach ($chats as $chat): ?>
+                            <a href="<?= base_url('/message/' . $chat['buyer_id'] . '/' . $property['id']) ?>" class="btn btn-outline-success btn-sm text-start chat-link" data-buyer-id="<?= $chat['buyer_id'] ?>" data-property-id="<?= $property['id'] ?>">
+                              <i class="bi bi-chat-dots me-1"></i>Chat with <?= esc($chat['buyer_name'] ?? '') ?>
+                            </a>
+                          <?php endforeach; ?>
+                        </div>
+                      <?php else: ?>
+                        <div class="text-white small">No chats yet for this property.</div>
+                      <?php endif; ?>
+                    </div>
                   </div>
 
                 </div>
@@ -349,7 +353,7 @@ const socket = io('http://localhost:3000', {
     reconnection: true
 });
 
-// Helper function to escape HTML (defined once)
+// Helper function to escape HTML
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -408,6 +412,81 @@ socket.on('connect_error', (error) => {
     console.error('Connection error:', error);
 });
 
+// ========== LISTEN FOR NEW MESSAGES FROM BUYER (REAL-TIME CHAT) ==========
+socket.on('private message', (data) => {
+    console.log('💬 New message received in seller dashboard:', data);
+    
+    // Show notification popup
+    showNotification(`📩 New message from ${escapeHtml(data.fromName)}: "${escapeHtml(data.content.substring(0, 50))}"`, 'info');
+    
+    // Find the property card for this message
+    let propertyCard = document.querySelector(`.property-card[data-property-id="${data.propertyId}"]`);
+    
+    // If property card doesn't exist, we may need to add it or reload
+    if (!propertyCard) {
+        console.log('Property card not found, may need to reload');
+        // Optionally reload to get the property
+        // location.reload();
+        return;
+    }
+    
+    // Highlight the property card
+    propertyCard.style.transition = 'background-color 0.5s';
+    propertyCard.style.backgroundColor = '#2a5a5a';
+    setTimeout(() => {
+        propertyCard.style.backgroundColor = '';
+    }, 3000);
+    
+    // Update or add the chat button in the property card
+    const existingChatLink = propertyCard.querySelector(`a[href*="/message/${data.from}/${data.propertyId}"]`);
+    
+    if (existingChatLink) {
+        // Update existing chat button
+        existingChatLink.innerHTML = '<i class="bi bi-chat-dots-fill"></i> New Message!';
+        existingChatLink.classList.remove('btn-outline-success');
+        existingChatLink.classList.add('btn-warning');
+    } else {
+        // Add new chat to the Active Chats section
+        const activeChatsDiv = propertyCard.querySelector('.active-chats');
+        if (activeChatsDiv) {
+            // Remove "No chats yet" message if exists
+            const noChatsMsg = activeChatsDiv.querySelector('.text-muted');
+            if (noChatsMsg && noChatsMsg.innerText.includes('No chats yet')) {
+                noChatsMsg.remove();
+            }
+            
+            // Create a grid container if doesn't exist
+            let gridContainer = activeChatsDiv.querySelector('.d-grid');
+            if (!gridContainer) {
+                gridContainer = document.createElement('div');
+                gridContainer.className = 'd-grid gap-2';
+                activeChatsDiv.appendChild(gridContainer);
+            }
+            
+            // Check if chat already exists
+            const existingChat = gridContainer.querySelector(`a[href*="/message/${data.from}/${data.propertyId}"]`);
+            if (!existingChat) {
+                // Add new chat link
+                const newChatLink = document.createElement('a');
+                newChatLink.href = `<?= base_url('/message/') ?>${data.from}/${data.propertyId}`;
+                newChatLink.className = 'btn btn-warning btn-sm text-start chat-link';
+                newChatLink.setAttribute('data-buyer-id', data.from);
+                newChatLink.setAttribute('data-property-id', data.propertyId);
+                newChatLink.innerHTML = `<i class="bi bi-chat-dots-fill"></i> New message from ${escapeHtml(data.fromName)}!`;
+                gridContainer.insertAdjacentHTML('afterbegin', newChatLink.outerHTML);
+            }
+        }
+    }
+    
+    // Also update the offers section chat button if exists
+    const offersMessageLink = propertyCard.querySelector(`.offers-container a[href*="/message/${data.from}/${data.propertyId}"]`);
+    if (offersMessageLink) {
+        offersMessageLink.innerHTML = '<i class="bi bi-chat-dots-fill"></i> New Message!';
+        offersMessageLink.classList.remove('btn-outline-primary');
+        offersMessageLink.classList.add('btn-warning');
+    }
+});
+
 // ========== LISTEN FOR NEW PROPERTIES FROM ADMIN ==========
 socket.on('property-added', function(property) {
     console.log('📦 New property received by seller:', property);
@@ -427,9 +506,10 @@ socket.on('property-added', function(property) {
 // Function to add property to seller dashboard without refresh
 function addPropertyToDashboard(property) {
     const propertiesContainer = document.getElementById('properties-container');
-    if (!propertiesContainer) return;
-    
-    const baseUrl = '<?= base_url() ?>';
+    if (!propertiesContainer) {
+        console.error('Properties container not found');
+        return;
+    }
     
     let imagePath = 'https://via.placeholder.com/800x500?text=No+Image';
     if (property.image_path && property.image_path !== 'null') {
@@ -461,11 +541,32 @@ function addPropertyToDashboard(property) {
                         </form>
                     </div>
                     <div class="mb-3">
+                        <div class="text-white small" style="color: white !important; opacity: 1 !important;">Offers</div>
                         <div class="offers-container">
                             <div class="text-white small">No offers yet.</div>
                         </div>
                     </div>
-                    <div class="alert alert-success mt-3 mb-0 small">🎉 New property added by admin!</div>
+                    <div>
+                        <div class="text-white small fw-bold mb-2">Active Chats</div>
+                        <div class="active-chats">
+                            <?php $chats = $chatsData[$property['id']] ?? []; ?>
+                            <?php if (!empty($chats)): ?>
+                                <div class="d-grid gap-2">
+                                    <?php foreach ($chats as $chat): ?>
+                                        <a href="<?= base_url('/message/' . $chat['buyer_id'] . '/' . $property['id']) ?>" class="btn btn-outline-success btn-sm text-start chat-link" data-buyer-id="<?= $chat['buyer_id'] ?>" data-property-id="<?= $property['id'] ?>">
+                                            <i class="bi bi-chat-dots me-1"></i>Chat with <?= esc($chat['buyer_name'] ?? '') ?>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="text-white small">No chats yet for this property.</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success mt-3 mb-0 small">
+                        🎉 New property added by admin!
+                    </div>
                 </div>
             </div>
         </div>
@@ -473,7 +574,6 @@ function addPropertyToDashboard(property) {
     
     propertiesContainer.insertAdjacentHTML('afterbegin', propertyHTML);
     
-    // Highlight the new property
     const newProperty = document.querySelector(`.property-card[data-property-id="${property.id}"]`);
     if (newProperty) {
         newProperty.style.transition = 'background-color 0.5s';
@@ -488,30 +588,24 @@ socket.on('property-updated', function(property) {
     console.log('✏️ Property update received by seller:', property);
     console.log('Image path received:', property.image_path);
     
-    // Check if this property belongs to this seller
     if (property.seller_id == currentSellerId) {
         console.log('✅ This property belongs to current seller, updating in dashboard...');
         
         const propertyCard = document.querySelector(`.property-card[data-property-id="${property.id}"]`);
         
         if (propertyCard) {
-            // Update title
             const titleElement = propertyCard.querySelector('.property-title');
             if (titleElement) titleElement.textContent = property.title;
             
-            // Update price
             const priceElement = propertyCard.querySelector('.property-price');
             if (priceElement) priceElement.textContent = `₱${parseFloat(property.price || 0).toLocaleString()}`;
             
-            // Update location
             const locationElement = propertyCard.querySelector('.property-location');
             if (locationElement) locationElement.innerHTML = `<i class="bi bi-geo-alt me-1"></i>${escapeHtml(property.location)}`;
             
-            // Update description
             const descElement = propertyCard.querySelector('.property-desc');
             if (descElement) descElement.textContent = property.description;
             
-            // ========== UPDATE IMAGE ==========
             if (property.image_path && property.image_path !== 'null' && property.image_path !== 'uploads/null') {
                 const imgElement = propertyCard.querySelector('.property-media img');
                 if (imgElement) {
@@ -524,9 +618,7 @@ socket.on('property-updated', function(property) {
                     console.log('🖼️ Seller: Image updated to:', newImagePath);
                 }
             }
-            // ========== END IMAGE UPDATE ==========
             
-            // Highlight the updated card
             propertyCard.style.transition = 'background-color 0.5s';
             propertyCard.style.backgroundColor = '#2a5a2a';
             setTimeout(() => {
@@ -547,15 +639,12 @@ socket.on('property-updated', function(property) {
 socket.on('new-offer', function(data) {
     console.log('💰 New offer received:', data);
     
-    // Find the property card for this offer
     const propertyCard = document.querySelector(`.property-card[data-property-id="${data.property_id}"]`);
     
     if (propertyCard) {
-        // Update the offers section
         const offersContainer = propertyCard.querySelector('.offers-container');
         
         if (offersContainer) {
-            // Check if offer already exists
             const existingOffer = offersContainer.querySelector(`[data-offer-id="${data.id}"]`);
             if (!existingOffer) {
                 const newOfferHTML = `
@@ -570,24 +659,20 @@ socket.on('new-offer', function(data) {
                             <span class="property-pill property-pill--warning">Pending</span>
                         </div>
                         <div class="d-flex gap-2 mt-2">
-                          <form method="post" action="<?= base_url('seller/offer_action') ?>" class="m-0 flex-fill">
-                            <input type="hidden" name="offer_id" value="${data.id}">
-                            <input type="hidden" name="action" value="accept">
-                            <button type="submit" class="btn btn-success btn-sm w-100">Accept</button>
-                          </form>
-                          <form method="post" action="<?= base_url('seller/offer_action') ?>" class="m-0 flex-fill">
-                            <input type="hidden" name="offer_id" value="${data.id}">
-                            <input type="hidden" name="action" value="reject">
-                            <button type="submit" class="btn btn-danger btn-sm w-100">Reject</button>
-                          </form>
+                            <form method="post" action="<?= base_url('seller/offer_action') ?>" class="m-0 flex-fill">
+                                <input type="hidden" name="offer_id" value="${data.id}">
+                                <input type="hidden" name="action" value="accept">
+                                <button type="submit" class="btn btn-success btn-sm w-100">Accept</button>
+                            </form>
+                            <form method="post" action="<?= base_url('seller/offer_action') ?>" class="m-0 flex-fill">
+                                <input type="hidden" name="offer_id" value="${data.id}">
+                                <input type="hidden" name="action" value="reject">
+                                <button type="submit" class="btn btn-danger btn-sm w-100">Reject</button>
+                            </form>
                         </div>
                         <div class="d-flex gap-2 flex-wrap mt-2">
-                            <a href="/message/${data.buyer_id}/${data.property_id}" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-chat-left-text me-1"></i>Message
-                            </a>
-                            <a href="/profile/${data.buyer_id}" class="btn btn-outline-light btn-sm">
-                                <i class="bi bi-person me-1"></i>Profile
-                            </a>
+                            <a href="/message/${data.buyer_id}/${data.property_id}" class="btn btn-outline-primary btn-sm">Message</a>
+                            <a href="/profile/${data.buyer_id}" class="btn btn-outline-light btn-sm">Profile</a>
                         </div>
                     </div>
                 `;
@@ -631,12 +716,55 @@ socket.on('property-deleted', function(data) {
             propertyCard.remove();
             showNotification('A property has been removed', 'danger');
             
-            // Update pagination count if needed
             const remainingCards = document.querySelectorAll('.property-card');
             if (remainingCards.length === 0) {
                 location.reload();
             }
         }, 300);
+    }
+});
+
+socket.on('offer-status-updated', function(data) {
+    console.log('📋 Offer status update received in seller dashboard:', data);
+    
+    // Find the offer card in the seller dashboard
+    const offerCard = document.querySelector(`.offers-container [data-offer-id="${data.id}"]`);
+    
+    if (offerCard) {
+        // Update the status badge
+        const statusBadge = offerCard.querySelector('.badge');
+        if (statusBadge) {
+            // Remove old classes and add new ones
+            statusBadge.classList.remove('bg-warning', 'text-dark', 'bg-success', 'bg-danger');
+            
+            if (data.status === 'accepted') {
+                statusBadge.classList.add('bg-success');
+                statusBadge.innerHTML = 'ACCEPTED';
+            } else if (data.status === 'rejected') {
+                statusBadge.classList.add('bg-danger');
+                statusBadge.innerHTML = 'REJECTED';
+            } else {
+                statusBadge.classList.add('bg-warning', 'text-dark');
+                statusBadge.innerHTML = 'PENDING';
+            }
+        }
+        
+        // Disable Accept/Reject buttons if status is not pending
+        if (data.status !== 'pending') {
+            const actionButtons = offerCard.querySelector('.d-flex.gap-2.mt-2');
+            if (actionButtons) {
+                actionButtons.style.display = 'none';
+            }
+        }
+        
+        // Highlight the offer card
+        offerCard.style.transition = 'background-color 0.5s';
+        offerCard.style.backgroundColor = '#2a5a5a';
+        setTimeout(() => {
+            offerCard.style.backgroundColor = '';
+        }, 2000);
+        
+        showNotification(`Offer #${data.id} has been ${data.status}`, data.status === 'accepted' ? 'success' : 'warning');
     }
 });
 

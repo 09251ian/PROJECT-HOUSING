@@ -30,7 +30,7 @@
       <div class="section-title text-white fs-4 mb-0">
         <i class="bi bi-plus-square me-2"></i>Add Property
       </div>
-      <div class="text-muted small">Create a new listing (title, price, location, and image).</div>
+      <div class="text-white small">Create a new listing (title, price, location, and image).</div>
     </div>
     <a href="<?= base_url('/admin/properties') ?>" class="btn btn-outline-light btn-sm">
       <i class="bi bi-arrow-left me-1"></i>Back
@@ -91,7 +91,7 @@
     <div class="col-md-12">
       <label for="image" class="form-label">Property Image</label>
       <input type="file" id="image" name="image" class="form-control" accept="image/*">
-      <div class="form-text text-muted">Optional. Leave empty to create without an image.</div>
+      <div class="form-text text-white">Optional. Leave empty to create without an image.</div>
     </div>
 
     <div class="col-12 text-end">

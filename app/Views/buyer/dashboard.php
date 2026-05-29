@@ -162,7 +162,7 @@ include __DIR__ . '/../partials/header.php';
               <p class="mb-1 property-location"><b>📍 Location:</b> <?= esc($property['location']) ?></p>
               <p class="property-seller"><small>Seller: <?= esc($property['seller_name']) ?></small></p>
 
-              <a href="<?= base_url('/message/' . $property['seller_id'] . '/' . $propertyId) ?>" class="btn btn-outline-success btn-sm mt-2">💬 Message Seller</a>
+              <a href="<?= base_url('message/' . $property['seller_id'] . '/' . $propertyId) ?>" class="btn btn-outline-success btn-sm mt-2">💬 Message Seller</a>
 
               <form method="post" action="<?= base_url('/buyer/favorites/toggle') ?>" class="d-inline">
                 <?= csrf_field() ?>
@@ -194,7 +194,7 @@ include __DIR__ . '/../partials/header.php';
                 <?php if ($chatExist): ?>
                   <p class="text-success small mb-0">You have an active chat with this seller.</p>
                 <?php else: ?>
-                  <p class="text-muted small mb-0">No chats yet for this property.</p>
+                  <p class="text-white small mb-0">No chats yet for this property.</p>
                 <?php endif; ?>
               </div>
             </div>
@@ -411,7 +411,7 @@ function addPropertyToBuyerDashboard(property) {
                     <p class="mb-1 property-location"><b>📍 Location:</b> ${escapeHtml(property.location)}</p>
                     <p class="property-seller"><small>Seller: ${escapeHtml(property.seller_name)}</small></p>
                     
-                    <a href="/message/${property.seller_id}/${property.id}" class="btn btn-outline-success btn-sm mt-2">💬 Message Seller</a>
+                    <a href="<?= base_url('message/') ?>${property.seller_id}/${property.id}" class="btn btn-outline-success btn-sm mt-2">💬 Message Seller</a>
                     
                     <form method="post" action="/buyer/favorites/toggle" class="d-inline">
                         <input type="hidden" name="csrf_test_name" value="${csrfToken}">

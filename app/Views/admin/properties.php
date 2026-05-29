@@ -59,39 +59,72 @@
       transform: translateX(-5px);
       transition: transform 0.3s ease;
     }
-  </style>
-
-  <style>
-  /* Pagination Styles */
-  .pagination {
-      margin: 0;
-  }
-
-  .pagination .page-link {
-      background-color: #16213e;
-      border-color: #0f3460;
-      color: white;
-      padding: 8px 16px;
-      font-size: 14px;
-  }
-
-  .pagination .page-link:hover {
-      background-color: #0f3460;
-      color: white;
-      border-color: #e94560;
-  }
-
-  .pagination .page-item.active .page-link {
-      background-color: #e94560;
-      border-color: #e94560;
-      color: white;
-  }
-
-  .pagination .page-item.disabled .page-link {
-      background-color: #16213e;
-      color: #6c757d;
-      border-color: #0f3460;
-  }
+    /* Pagination Styles */
+    .pagination {
+        margin: 0;
+    }
+    .pagination .page-link {
+        background-color: #16213e;
+        border-color: #0f3460;
+        color: white;
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    .pagination .page-link:hover {
+        background-color: #0f3460;
+        color: white;
+        border-color: #e94560;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #e94560;
+        border-color: #e94560;
+        color: white;
+    }
+    .pagination .page-item.disabled .page-link {
+        background-color: #16213e;
+        color: #6c757d;
+        border-color: #0f3460;
+    }
+    /* Responsive Table Styles - SAME FONT SIZE ON ALL SCREENS */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .table-responsive table {
+        min-width: 800px;
+        width: 100%;
+    }
+    .table-responsive th,
+    .table-responsive td {
+        white-space: nowrap;
+        vertical-align: middle;
+        font-size: 18px;
+    }
+    /* Allow action column buttons to stay visible */
+    .table-responsive td:last-child {
+        white-space: nowrap;
+    }
+    /* Mobile screens - SAME FONT SIZE */
+    @media (max-width: 768px) {
+        .table-responsive th,
+        .table-responsive td {
+            font-size: 18px;
+            padding: 8px 6px;
+        }
+        .table-responsive table {
+            min-width: 700px;
+        }
+        .btn-edit, .btn-delete {
+            font-size: 11px;
+            padding: 4px 8px;
+        }
+        .badge {
+            font-size: 10px;
+            padding: 3px 6px;
+        }
+    }
   </style>
 </head>
 <body class="app-dark">
@@ -156,7 +189,8 @@
     </div>
   </div>
 
-  <div class="table-responsive app-table-wrap">
+  <!-- Responsive Table -->
+  <div class="table-responsive">
     <table class="table table-dark table-striped align-middle">
       <thead>
         <tr>
@@ -190,16 +224,13 @@
                       onclick="deleteProperty(<?= $p['id'] ?>, '<?= esc(addslashes($p['title'])) ?>')">
                 <i class="bi bi-trash me-1"></i> Delete
               </button>
-             </td>
+            </td>
           </tr>
         <?php endforeach; ?>
       </tbody>
     </table>
   </div>
 
-    </table>
-  </div>
-  
   <!-- PAGINATION AT THE BOTTOM -->
   <?php if (isset($pager) && $pager->lastPage > 1): ?>
   <div class="d-flex justify-content-center mt-4">
@@ -208,7 +239,7 @@
               <!-- Previous Button -->
               <?php if ($pager->currentPage > 1): ?>
                   <li class="page-item">
-                      <a class="page-link" href="?page=<?= $pager->currentPage - 1 ?>" aria-label="Previous">
+                      <a class="page-link" href="?page=<?= $pager->currentPage - 1 ?>&search=<?= urlencode($search ?? '') ?>" aria-label="Previous">
                           <span aria-hidden="true">&laquo; Prev</span>
                       </a>
                   </li>
@@ -221,7 +252,7 @@
               <!-- Page Numbers -->
               <?php for ($i = 1; $i <= $pager->lastPage; $i++): ?>
                   <li class="page-item <?= $i == $pager->currentPage ? 'active' : '' ?>">
-                      <a class="page-link" href="?page=<?= $i ?>">
+                      <a class="page-link" href="?page=<?= $i ?>&search=<?= urlencode($search ?? '') ?>">
                           <?= $i ?>
                       </a>
                   </li>
@@ -230,7 +261,7 @@
               <!-- Next Button -->
               <?php if ($pager->currentPage < $pager->lastPage): ?>
                   <li class="page-item">
-                      <a class="page-link" href="?page=<?= $pager->currentPage + 1 ?>" aria-label="Next">
+                      <a class="page-link" href="?page=<?= $pager->currentPage + 1 ?>&search=<?= urlencode($search ?? '') ?>" aria-label="Next">
                           <span aria-hidden="true">Next &raquo;</span>
                       </a>
                   </li>
@@ -316,7 +347,6 @@ function showNotification(message, type = 'success') {
     
     alertArea.innerHTML = alertHTML;
     
-    // Auto-dismiss after 4 seconds
     setTimeout(() => {
         const alert = alertArea.querySelector('.alert');
         if (alert) {
@@ -358,32 +388,25 @@ socket.on('connect_error', (error) => {
 socket.on('property-updated', function(property) {
     console.log('✏️ Property update received:', property);
     
-    // Update the property row in the table
     const row = document.getElementById(`property-row-${property.id}`);
     if (row) {
-        // Update title
         const titleSpan = row.querySelector(`.property-title-${property.id}`);
         if (titleSpan) titleSpan.textContent = property.title;
         
-        // Update location
         const locationCell = row.querySelector(`.property-location-${property.id}`);
         if (locationCell) locationCell.textContent = property.location;
         
-        // Update price
         const priceCell = row.querySelector(`.property-price-${property.id}`);
         if (priceCell) priceCell.textContent = `₱${parseFloat(property.price || 0).toLocaleString()}`;
         
-        // Update seller
         const sellerCell = row.querySelector(`.property-seller-${property.id}`);
         if (sellerCell) sellerCell.textContent = property.seller_name;
         
-        // Update archived status
         const archivedCell = row.querySelector(`.property-archived-${property.id}`);
         if (archivedCell) {
             archivedCell.innerHTML = property.is_archived ? '<span class="badge bg-warning">Yes</span>' : '<span class="badge bg-success">No</span>';
         }
         
-        // Highlight the updated row
         row.style.transition = 'background-color 0.3s';
         row.style.backgroundColor = 'rgba(40, 167, 69, 0.3)';
         setTimeout(() => {
@@ -398,8 +421,6 @@ socket.on('property-updated', function(property) {
 socket.on('property-added', function(property) {
     console.log('📦 New property added:', property);
     showNotification(`New property "${property.title}" has been added`, 'success');
-    
-    // Reload page to show new property
     setTimeout(() => location.reload(), 1500);
 });
 
@@ -407,7 +428,6 @@ socket.on('property-added', function(property) {
 socket.on('property-deleted', function(data) {
     console.log('🗑️ Property deleted:', data.id);
     
-    // Remove the row from table
     const row = document.getElementById(`property-row-${data.id}`);
     if (row) {
         row.style.transition = 'opacity 0.3s';
@@ -416,7 +436,6 @@ socket.on('property-deleted', function(data) {
             row.remove();
             showNotification('Property has been deleted', 'danger');
             
-            // Show message if no properties left
             const tbody = document.getElementById('properties-table-body');
             if (tbody && tbody.children.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No properties found</td></tr>';
@@ -470,7 +489,6 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', async func
         if (result.success) {
             if (deleteModal) deleteModal.hide();
             showNotification('Property deleted successfully!', 'success');
-            // The row will be removed by the socket event
         } else {
             showNotification(result.message || 'Delete failed', 'danger');
         }
