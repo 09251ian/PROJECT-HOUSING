@@ -79,11 +79,11 @@
         min-width: 200px;
         max-width: 300px;
     }
-    /* Mobile screens - SAME FONT SIZE, just adjust padding */
+    /* Mobile screens */
     @media (max-width: 768px) {
         .table-responsive th,
         .table-responsive td {
-            font-size: 18px;  /* ← SAME as desktop, NOT larger */
+            font-size: 16px; 
             padding: 8px 6px;
         }
         .table-responsive table {

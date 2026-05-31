@@ -216,7 +216,7 @@
         <?php endif; ?>
       </form>
       <?php if (!empty($search)): ?>
-        <div class="mt-2 text-muted small">
+        <div class="mt-2 text-white small">
           <i class="bi bi-info-circle"></i> Showing results for: "<strong class="text-warning"><?= esc($search) ?></strong>"
         </div>
       <?php endif; ?>
@@ -267,7 +267,7 @@
             </tr>
           <?php endforeach; ?>
         <?php else: ?>
-          <tr><td colspan="7" class="text-center text-muted">No offers found</td></tr>
+          <tr><td colspan="7" class="text-center text-white">No offers found</td></tr>
         <?php endif; ?>
       </tbody>
     </table>
@@ -323,8 +323,8 @@
   <!-- Empty state -->
   <div id="empty-state" style="display: none;" class="text-center py-5">
     <i class="bi bi-inbox" style="font-size: 4rem; color: #6c757d;"></i>
-    <h4 class="text-muted mt-3">No Offers Yet</h4>
-    <p class="text-muted">When buyers make offers, they will appear here instantly</p>
+    <h4 class="text-white mt-3">No Offers Yet</h4>
+    <p class="text-white">When buyers make offers, they will appear here instantly</p>
   </div>
 </div>
 

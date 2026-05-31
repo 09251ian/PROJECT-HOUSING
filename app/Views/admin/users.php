@@ -74,7 +74,7 @@
     .table-responsive th,
     .table-responsive td {
         vertical-align: middle;
-        font-size: 18px;
+        font-size: 16px;
         word-wrap: break-word; /* ← ADD THIS - wraps text */
     }
     /* Bio column - fixed width with text wrapping */
@@ -83,7 +83,7 @@
         word-break: break-word;
         max-width: 250px; /* ← ADD THIS - limits width */
         min-width: 150px;
-        font-size: 18px;
+        font-size: 16px;
     }
     /* Registered column - fixed width */
     .table-responsive td:last-child,

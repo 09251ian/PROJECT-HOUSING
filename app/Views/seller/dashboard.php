@@ -1,6 +1,11 @@
 <?php
 $active = 'seller_dashboard';
 $user = $user ?? session()->get('user') ?? [];
+
+$offersData = $offersData ?? [];
+$chatsData = $chatsData ?? [];
+$properties = $properties ?? [];
+$search = $search ?? '';
 ?>
 <!doctype html>
 <html lang="en">
@@ -534,14 +539,18 @@ function addPropertyToDashboard(property) {
                     </div>
                     <p class="property-desc mb-3">${escapeHtml(property.description ? property.description.substring(0, 100) : '')}</p>
                     <div class="d-flex gap-2 flex-wrap mb-3">
-                        <a href="/seller/edit_property/${property.id}" class="btn btn-outline-primary btn-sm">Edit</a>
+                        <a href="/seller/edit_property/${property.id}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil-square me-1"></i>Edit
+                        </a>
                         <form method="post" action="/seller/archive" class="m-0">
                             <input type="hidden" name="property_id" value="${property.id}">
-                            <button type="submit" class="btn btn-warning btn-sm">Archive</button>
+                            <button type="submit" class="btn btn-warning btn-sm">
+                                <i class="bi bi-archive me-1"></i>Archive
+                            </button>
                         </form>
                     </div>
                     <div class="mb-3">
-                        <div class="text-white small" style="color: white !important; opacity: 1 !important;">Offers</div>
+                        <div class="text-white small fw-bold mb-2">Offers</div>
                         <div class="offers-container">
                             <div class="text-white small">No offers yet.</div>
                         </div>
@@ -549,23 +558,11 @@ function addPropertyToDashboard(property) {
                     <div>
                         <div class="text-white small fw-bold mb-2">Active Chats</div>
                         <div class="active-chats">
-                            <?php $chats = $chatsData[$property['id']] ?? []; ?>
-                            <?php if (!empty($chats)): ?>
-                                <div class="d-grid gap-2">
-                                    <?php foreach ($chats as $chat): ?>
-                                        <a href="<?= base_url('/message/' . $chat['buyer_id'] . '/' . $property['id']) ?>" class="btn btn-outline-success btn-sm text-start chat-link" data-buyer-id="<?= $chat['buyer_id'] ?>" data-property-id="<?= $property['id'] ?>">
-                                            <i class="bi bi-chat-dots me-1"></i>Chat with <?= esc($chat['buyer_name'] ?? '') ?>
-                                        </a>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="text-white small">No chats yet for this property.</div>
-                            <?php endif; ?>
+                            <div class="text-white small">No chats yet for this property.</div>
                         </div>
                     </div>
-
                     <div class="alert alert-success mt-3 mb-0 small">
-                        🎉 New property added by admin!
+                        <i class="bi bi-star-fill me-1"></i>New property added by admin!
                     </div>
                 </div>
             </div>
